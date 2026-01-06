@@ -5,7 +5,6 @@ import ImageViewer from './ImageViewer';
 import QuestionPanel from './QuestionPanel';
 import FeedbackModal from './FeedbackModal';
 import { getCaseById, getQuestionByCaseAndQuestionId } from '@/utils/caseLoader';
-import { Case, Question } from '@/utils/types';
 
 interface GameScreenProps {
   caseId: number;
@@ -71,13 +70,13 @@ export default function GameScreen({
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-gray-100">
       <QuestionPanel
         questionText={currentQuestion.text}
         questionNumber={currentQuestionId}
         totalQuestions={caseData.questions.length}
       />
-      <div className="flex-1 relative">
+      <div className="flex-1 relative overflow-hidden">
         <ImageViewer
           imageSrc={caseData.image}
           answerRegions={currentQuestion.answerRegions}

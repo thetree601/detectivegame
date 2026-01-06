@@ -22,20 +22,20 @@ export default function FeedbackModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md mx-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl p-6 md:p-8 max-w-md w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
         {isCorrect ? (
           <>
             <div className="text-center mb-6">
-              <div className="text-6xl mb-4">✅</div>
-              <h2 className="text-2xl font-bold text-green-600 mb-4">정답입니다!</h2>
+              <div className="text-5xl md:text-6xl mb-4">✅</div>
+              <h2 className="text-xl md:text-2xl font-bold text-green-600 mb-4">정답입니다!</h2>
               {explanation && (
-                <p className="text-gray-700 leading-relaxed">{explanation}</p>
+                <p className="text-sm md:text-base text-gray-700 leading-relaxed">{explanation}</p>
               )}
             </div>
             <button
               onClick={onNextQuestion}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="w-full bg-blue-600 text-white py-3 md:py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-base md:text-lg"
             >
               다음 질문으로
             </button>
@@ -43,9 +43,9 @@ export default function FeedbackModal({
         ) : (
           <>
             <div className="text-center mb-6">
-              <div className="text-6xl mb-4">❌</div>
-              <h2 className="text-2xl font-bold text-red-600 mb-4">오답입니다</h2>
-              <p className="text-gray-600">다시 시도해보세요.</p>
+              <div className="text-5xl md:text-6xl mb-4">❌</div>
+              <h2 className="text-xl md:text-2xl font-bold text-red-600 mb-4">오답입니다</h2>
+              <p className="text-gray-600 text-sm md:text-base">다시 시도해보세요.</p>
             </div>
             <div className="space-y-3">
               <button
@@ -62,7 +62,7 @@ export default function FeedbackModal({
               </button>
               <button
                 onClick={onGoToQuizList}
-                className="w-full bg-gray-100 text-gray-600 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                className="w-full bg-gray-100 text-gray-600 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm"
               >
                 퀴즈 목록 보기
               </button>
