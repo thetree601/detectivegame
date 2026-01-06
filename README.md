@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DetectiveGame
 
-## Getting Started
+DetectiveGame은 이미지를 자세히 관찰하고 정답 영역을 찾아내는
+**인터랙티브 탐정 추리 게임**입니다.
 
-First, run the development server:
+단순히 텍스트로만 문제를 풀거나 선택지를 고르는 것이 아니라, 이미지 속에서 **핵심 단서를 직접 클릭**하여 찾아내는 방식으로 진행됩니다.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+이를 통해:
+
+- 이미지 관찰력과 추리력을 기를 수 있고
+- 시각적 단서를 통한 몰입감 있는 게임 경험을 제공하며
+- 단계별 설명을 통해 논리적 사고력을 향상시키는 것
+
+을 목표로 합니다.
+
+## 주요 기능
+
+- 🖼️ **이미지 뷰어** - 고해상도 이미지를 확대/축소하며 관찰
+- 🎯 **정답 영역 감지** - 클릭한 위치가 정답 영역인지 실시간 판단
+- ❓ **단계별 질문** - 각 케이스마다 여러 질문을 순차적으로 해결
+- 💡 **피드백 시스템** - 정답/오답에 따른 즉각적인 피드백 및 설명 제공
+- 📊 **진행 상황 표시** - 현재 질문 번호와 전체 질문 수 표시
+
+## 사용 기술
+
+### Frontend
+- **Next.js 14** (App Router)
+- **TypeScript**
+- **React** (Client Components)
+- **Tailwind CSS**
+
+### 주요 기능 구현
+- 이미지 비율 계산 및 좌표 변환
+- 클릭 영역 감지 알고리즘
+- JSON 기반 케이스 데이터 관리
+
+## 🧠 게임 플레이 방식
+
+DetectiveGame의 게임 흐름은 다음과 같습니다.
+
+### 1. 케이스 선택
+- 케이스 데이터(JSON)에서 케이스 정보 로드
+- 이미지와 질문 목록 불러오기
+
+### 2. 질문 확인
+- 상단 패널에서 현재 질문 확인
+- 이미지를 자세히 관찰하며 단서 찾기
+
+### 3. 정답 영역 클릭
+- 이미지에서 정답으로 보이는 영역 클릭
+- 클릭 좌표를 이미지 비율 좌표로 변환
+- 정답 영역과 일치하는지 판단
+
+### 4. 피드백 및 다음 단계
+- 정답: 설명과 함께 다음 질문으로 진행
+- 오답: 재시도 또는 정답 보기 옵션 제공
+- 모든 질문 완료 시 케이스 종료
+
+## 코드 구조
+
+```
+src
+├── app
+│   ├── layout.tsx          # Root layout
+│   └── page.tsx            # 메인 페이지 (GameScreen 렌더링)
+│
+├── components
+│   ├── GameScreen.tsx      # 게임 메인 화면 (상태 관리)
+│   ├── ImageViewer.tsx     # 이미지 뷰어 및 클릭 감지
+│   ├── QuestionPanel.tsx   # 질문 표시 패널
+│   └── FeedbackModal.tsx   # 피드백 모달 (정답/오답)
+│
+├── data
+│   └── cases.json          # 케이스 데이터 (이미지, 질문, 정답 영역)
+│
+└── utils
+    ├── caseLoader.ts       # 케이스 데이터 로더
+    ├── hitDetection.ts     # 클릭 영역 감지 알고리즘
+    └── types.ts            # TypeScript 타입 정의
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 디자인 철학
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+DetectiveGame은 **직관적이고 몰입감 있는** 사용자 경험을 중심으로 설계되었습니다.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **전체 화면 레이아웃** - 이미지에 집중할 수 있도록 질문 패널과 이미지 뷰어 분리
+- **즉각적인 피드백** - 클릭 즉시 정답 여부 확인 및 설명 제공
+- **반응형 이미지 처리** - 다양한 화면 크기에 맞춰 이미지 비율 자동 조정
+- **정확한 좌표 변환** - 이미지 비율과 화면 크기 관계를 고려한 정밀한 클릭 감지
 
-## Learn More
+이를 통해:
 
-To learn more about Next.js, take a look at the following resources:
+- 이미지 관찰에 집중할 수 있고
+- 단서를 찾는 재미를 느낄 수 있으며
+- 논리적 추리 과정을 즐길 수 있도록 설계했습니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 다음 단계
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+현재 MVP 단계에서는:
 
-## Deploy on Vercel
+- 기본 이미지 클릭 기반 정답 감지
+- JSON 파일 기반 케이스 관리
+- 단계별 질문 진행 시스템
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+에 집중합니다.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+이후 개선 계획:
+
+- 🎨 **케이스 에디터** - 웹 UI를 통한 케이스 추가/수정 기능
+- 📈 **점수 시스템** - 정답률, 완료 시간 기반 점수 계산
+- 🏆 **성취 시스템** - 케이스 완료 시 배지 및 기록 저장
+- 💾 **진행 상황 저장** - 로컬 스토리지 또는 백엔드 연동
+- 🎯 **힌트 시스템** - 막힐 때 힌트 제공 기능
+- 📱 **모바일 최적화** - 터치 인터랙션 개선
+
