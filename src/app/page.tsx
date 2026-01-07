@@ -38,6 +38,10 @@ export default function Home() {
     setShowCaseListModal(true);
   };
 
+  const handleGoToMain = () => {
+    setGameStarted(false); // StartScreen으로 돌아가기
+  };
+
   if (!gameStarted) {
     return (
       <>
@@ -61,6 +65,7 @@ export default function Home() {
         caseId={currentCaseId} 
         onCaseComplete={handleCaseComplete}
         onOpenCaseList={handleOpenCaseList}
+        onGoToMain={handleGoToMain}
       />
       <CaseListModal
         isOpen={showCaseListModal}

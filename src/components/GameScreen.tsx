@@ -12,6 +12,7 @@ interface GameScreenProps {
   initialQuestionId?: number;
   onCaseComplete?: () => void;
   onOpenCaseList?: () => void;
+  onGoToMain?: () => void;
 }
 
 export default function GameScreen({
@@ -19,6 +20,7 @@ export default function GameScreen({
   initialQuestionId = 1,
   onCaseComplete,
   onOpenCaseList,
+  onGoToMain,
 }: GameScreenProps) {
   const [currentQuestionId, setCurrentQuestionId] = useState(initialQuestionId);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -92,6 +94,15 @@ export default function GameScreen({
     }
   };
 
+  const handleGoToMain = () => {
+    if (onGoToMain) {
+      onGoToMain();
+    } else {
+      // fallback: onGoToMain이 없으면 기본 동작
+      window.location.href = '/';
+    }
+  };
+
   return (
     <div className={styles.gameScreen}>
       <QuestionPanel
@@ -115,6 +126,7 @@ export default function GameScreen({
         onShowAnswer={handleShowAnswer}
         onNextQuestion={handleNextQuestion}
         onOpenCaseList={handleOpenCaseList}
+        onGoToMain={handleGoToMain}
       />
     </div>
   );

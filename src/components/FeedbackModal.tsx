@@ -10,6 +10,7 @@ interface FeedbackModalProps {
   onShowAnswer: () => void;
   onNextQuestion: () => void;
   onOpenCaseList?: () => void;
+  onGoToMain?: () => void;
 }
 
 export default function FeedbackModal({
@@ -20,6 +21,7 @@ export default function FeedbackModal({
   onShowAnswer,
   onNextQuestion,
   onOpenCaseList,
+  onGoToMain,
 }: FeedbackModalProps) {
   if (!isOpen) return null;
 
@@ -68,6 +70,14 @@ export default function FeedbackModal({
               >
                 퀴즈 목록 보기
               </button>
+              {onGoToMain && (
+                <button
+                  onClick={onGoToMain}
+                  className={styles.tertiaryButton}
+                >
+                  메인 화면으로
+                </button>
+              )}
             </div>
           </>
         )}
