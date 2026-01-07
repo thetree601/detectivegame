@@ -243,9 +243,11 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: linear-gradient(to bottom, #111827, #1f2937, #111827);
+  background: #000000; /* 검은색으로 통일 */
   position: relative;
-  align-items: center; /* 자식 요소들을 중앙 정렬 */
+  max-width: 664px; /* 모든 화면에서 최대 너비 고정 */
+  margin: 0 auto; /* 중앙 정렬 */
+  width: 100%; /* 작은 화면에서는 전체 너비 사용 */
 }
 
 .startImageSection {
@@ -253,7 +255,8 @@
   overflow: hidden;
   width: 100%;
   height: calc(100vh - 120px);
-  max-width: 428px;
+  background: #000000; /* 이미지 뒤 배경을 검은색으로 명시 */
+  /* 작은 화면에서는 전체 너비 사용 */
   max-height: calc(100vh - 120px);
 }
 
@@ -263,7 +266,7 @@
 }
 
 .startImage {
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   opacity: 0.9;
 }
@@ -271,7 +274,7 @@
 .startGradientOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, #111827, transparent, transparent);
+  background: linear-gradient(to top, #000000, transparent, transparent); /* 검은색으로 변경 */
 }
 
 .startTitleSection {
@@ -302,7 +305,7 @@
   background: #111827;
   border-top: 1px solid #374151;
   width: 100%;
-  max-width: 428px;
+  /* 작은 화면에서는 전체 너비 사용 */
 }
 
 .startButton {
@@ -360,6 +363,7 @@
 
 /* 반응형 */
 @media (min-width: 768px) {
+  /* 큰 화면에서도 동일한 최대 너비 유지 (이미 .startScreen에 설정됨) */
   .startTitle {
     font-size: 2.25rem;
   }
