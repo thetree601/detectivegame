@@ -1,0 +1,446 @@
+/* ============================================
+   게임 화면 레이아웃
+   ============================================ */
+.gameScreen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f3f4f6;
+}
+
+.imageContainer {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============================================
+   질문 패널
+   ============================================ */
+.questionPanel {
+  background: white;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.questionNumber {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.questionTitle {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #1f2937;
+  line-height: 1.6;
+}
+
+.questionHint {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #4b5563;
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .questionPanel {
+    padding: 1.5rem;
+  }
+  
+  .questionNumber {
+    font-size: 0.875rem;
+  }
+  
+  .questionTitle {
+    font-size: 1.25rem;
+  }
+  
+  .questionHint {
+    font-size: 0.875rem;
+  }
+}
+
+/* ============================================
+   이미지 뷰어
+   ============================================ */
+.imageViewerContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111827;
+  cursor: pointer;
+}
+
+/* ============================================
+   피드백 모달
+   ============================================ */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.feedbackModal {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalContent {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.modalIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.modalTitleCorrect {
+  color: #16a34a;
+}
+
+.modalTitleWrong {
+  color: #dc2626;
+}
+
+.modalExplanation {
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.modalMessage {
+  color: #4b5563;
+  font-size: 0.875rem;
+}
+
+.modalButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .feedbackModal {
+    padding: 2rem;
+  }
+  
+  .modalIcon {
+    font-size: 3.75rem;
+  }
+  
+  .modalTitle {
+    font-size: 1.5rem;
+  }
+  
+  .modalExplanation {
+    font-size: 1rem;
+  }
+  
+  .modalMessage {
+    font-size: 1rem;
+  }
+}
+
+/* ============================================
+   버튼 스타일
+   ============================================ */
+.primaryButton {
+  width: 100%;
+  background: #2563eb;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.primaryButton:hover {
+  background: #1d4ed8;
+}
+
+.primaryButton:active {
+  transform: scale(0.98);
+}
+
+.secondaryButton {
+  width: 100%;
+  background: #f3f4f6;
+  color: #1f2937;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  background: #e5e7eb;
+}
+
+.secondaryButton:active {
+  transform: scale(0.98);
+}
+
+.tertiaryButton {
+  width: 100%;
+  background: #f9fafb;
+  color: #4b5563;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.tertiaryButton:hover {
+  background: #f3f4f6;
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .primaryButton {
+    padding: 1rem;
+    font-size: 1.125rem;
+  }
+}
+
+/* ============================================
+   시작 화면
+   ============================================ */
+.startScreen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(to bottom, #111827, #1f2937, #111827);
+  position: relative;
+  align-items: center; /* 자식 요소들을 중앙 정렬 */
+}
+
+.startImageSection {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: calc(100vh - 120px);
+  max-width: 428px;
+  max-height: calc(100vh - 120px);
+}
+
+.startImageOverlay {
+  position: absolute;
+  inset: 0;
+}
+
+.startImage {
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.9;
+}
+
+.startGradientOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, #111827, transparent, transparent);
+}
+
+.startTitleSection {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem;
+  padding-bottom: 4rem;
+}
+
+.startTitle {
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.startSubtitle {
+  color: #e5e7eb;
+  font-size: 1.125rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.startButtonSection {
+  padding: 1.5rem;
+  background: #111827;
+  border-top: 1px solid #374151;
+  width: 100%;
+  max-width: 428px;
+}
+
+.startButton {
+  width: 100%;
+  background: linear-gradient(to right, #2563eb, #9333ea);
+  color: white;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  font-weight: bold;
+  font-size: 1.125rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.startButton:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+  transform: scale(1.02);
+}
+
+.startButton:active {
+  transform: scale(0.98);
+}
+
+.caseListButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  background: rgba(37, 99, 235, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.caseListButton:hover {
+  background: rgba(37, 99, 235, 0.3);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.4);
+}
+
+.caseListButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .startTitle {
+    font-size: 2.25rem;
+  }
+  
+  .caseListButton {
+    top: 1.5rem;
+    right: 1.5rem;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+/* ============================================
+   케이스 목록 모달
+   ============================================ */
+.caseListModal {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.caseListTitle {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+  color: #1f2937;
+}
+
+.caseListScrollContainer {
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.caseListItem {
+  width: 100%;
+  padding: 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.caseListItem:hover {
+  background: #f3f4f6;
+  border-color: #2563eb;
+  border: 1px solid #2563eb;
+}
+
+.caseListItem:active {
+  transform: scale(0.98);
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .caseListModal {
+    padding: 2rem;
+  }
+  
+  .caseListTitle {
+    font-size: 1.5rem;
+  }
+  
+  .caseListItem {
+    font-size: 1.125rem;
+    padding: 1.25rem;
+  }
+}

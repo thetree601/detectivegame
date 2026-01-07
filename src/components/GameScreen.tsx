@@ -1,24 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ImageViewer from './ImageViewer';
 import QuestionPanel from './QuestionPanel';
 import FeedbackModal from './FeedbackModal';
 import { getCaseById, getQuestionByCaseAndQuestionId } from '@/utils/caseLoader';
+import styles from '@/styles/components.module.css';
 
 interface GameScreenProps {
   caseId: number;
   initialQuestionId?: number;
+  onCaseComplete?: () => void;
+  onOpenCaseList?: () => void;
 }
 
 export default function GameScreen({
   caseId,
   initialQuestionId = 1,
+  onCaseComplete,
+  onOpenCaseList,
 }: GameScreenProps) {
   const [currentQuestionId, setCurrentQuestionId] = useState(initialQuestionId);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
+
+  // 케이스가 변경되면 첫 번째 질문으로 리셋
+  useEffect(() => {
+    setCurrentQuestionId(1);
+    setShowFeedback(false);
+    setShowAnswer(false);
+    setIsCorrect(false);
+  }, [caseId]);
 
   const caseData = getCaseById(caseId);
   const currentQuestion = getQuestionByCaseAndQuestionId(
@@ -58,25 +71,35 @@ export default function GameScreen({
       setShowAnswer(false);
       setIsCorrect(false);
     } else {
-      // 모든 질문 완료
-      alert('모든 질문을 완료했습니다!');
+      // 현재 케이스의 모든 질문 완료
+      // onCaseComplete가 있으면 호출 (다음 케이스로 이동 또는 전체 완료 처리)
+      if (onCaseComplete) {
+        onCaseComplete();
+      } else {
+        // fallback: onCaseComplete가 없으면 기본 메시지
+        alert('모든 질문을 완료했습니다!');
+      }
       setShowFeedback(false);
     }
   };
 
-  const handleGoToQuizList = () => {
-    // 메인 페이지로 이동 (나중에 구현)
-    window.location.href = '/';
+  const handleOpenCaseList = () => {
+    if (onOpenCaseList) {
+      onOpenCaseList();
+    } else {
+      // fallback: 기존 동작 유지
+      window.location.href = '/';
+    }
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className={styles.gameScreen}>
       <QuestionPanel
         questionText={currentQuestion.text}
         questionNumber={currentQuestionId}
         totalQuestions={caseData.questions.length}
       />
-      <div className="flex-1 relative overflow-hidden">
+      <div className={styles.imageContainer}>
         <ImageViewer
           imageSrc={caseData.image}
           answerRegions={currentQuestion.answerRegions}
@@ -91,7 +114,7 @@ export default function GameScreen({
         onRetry={handleRetry}
         onShowAnswer={handleShowAnswer}
         onNextQuestion={handleNextQuestion}
-        onGoToQuizList={handleGoToQuizList}
+        onOpenCaseList={handleOpenCaseList}
       />
     </div>
   );

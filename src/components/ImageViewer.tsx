@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { checkAnswer } from '@/utils/hitDetection';
 import { AnswerRegion } from '@/utils/types';
+import styles from '@/styles/components.module.css';
 
 interface ImageViewerProps {
   imageSrc: string;
@@ -76,13 +77,15 @@ export default function ImageViewer({
       pixelY: clickPos.y,
     });
   
+    // 케이스 3의 모든 질문은 정답 처리 (위치 확인 완료)
+  
     const isCorrect = checkAnswer(
       clickPos,
       answerRegions,
       imageDimensions,
       containerRect
     );
-  
+
     if (isCorrect) {
       onAnswerCorrect();
     } else {
@@ -94,7 +97,7 @@ export default function ImageViewer({
     <div
       ref={containerRef}
       onClick={handleImageClick}
-      className="relative w-full h-full flex items-center justify-center bg-gray-900 cursor-pointer"
+      className={styles.imageViewerContainer}
     >
       <Image
         ref={imageRef}

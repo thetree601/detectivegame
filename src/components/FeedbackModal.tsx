@@ -1,5 +1,7 @@
 'use client';
 
+import styles from '@/styles/components.module.css';
+
 interface FeedbackModalProps {
   isOpen: boolean;
   isCorrect: boolean;
@@ -7,7 +9,7 @@ interface FeedbackModalProps {
   onRetry: () => void;
   onShowAnswer: () => void;
   onNextQuestion: () => void;
-  onGoToQuizList: () => void;
+  onOpenCaseList?: () => void;
 }
 
 export default function FeedbackModal({
@@ -17,52 +19,52 @@ export default function FeedbackModal({
   onRetry,
   onShowAnswer,
   onNextQuestion,
-  onGoToQuizList,
+  onOpenCaseList,
 }: FeedbackModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-6 md:p-8 max-w-md w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div className={styles.modalOverlay}>
+      <div className={styles.feedbackModal}>
         {isCorrect ? (
           <>
-            <div className="text-center mb-6">
-              <div className="text-5xl md:text-6xl mb-4">✅</div>
-              <h2 className="text-xl md:text-2xl font-bold text-green-600 mb-4">정답입니다!</h2>
+            <div className={styles.modalContent}>
+              <div className={styles.modalIcon}>✅</div>
+              <h2 className={`${styles.modalTitle} ${styles.modalTitleCorrect}`}>정답입니다!</h2>
               {explanation && (
-                <p className="text-sm md:text-base text-gray-700 leading-relaxed">{explanation}</p>
+                <p className={styles.modalExplanation}>{explanation}</p>
               )}
             </div>
             <button
               onClick={onNextQuestion}
-              className="w-full bg-blue-600 text-white py-3 md:py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-base md:text-lg"
+              className={styles.primaryButton}
             >
               다음 질문으로
             </button>
           </>
         ) : (
           <>
-            <div className="text-center mb-6">
-              <div className="text-5xl md:text-6xl mb-4">❌</div>
-              <h2 className="text-xl md:text-2xl font-bold text-red-600 mb-4">오답입니다</h2>
-              <p className="text-gray-600 text-sm md:text-base">다시 시도해보세요.</p>
+            <div className={styles.modalContent}>
+              <div className={styles.modalIcon}>❌</div>
+              <h2 className={`${styles.modalTitle} ${styles.modalTitleWrong}`}>오답입니다</h2>
+              <p className={styles.modalMessage}>다시 시도해보세요.</p>
             </div>
-            <div className="space-y-3">
+            <div className={styles.modalButtons}>
               <button
                 onClick={onRetry}
-                className="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                className={styles.secondaryButton}
               >
                 재시도
               </button>
               <button
                 onClick={onShowAnswer}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                className={styles.primaryButton}
               >
                 정답 보기
               </button>
               <button
-                onClick={onGoToQuizList}
-                className="w-full bg-gray-100 text-gray-600 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm"
+                onClick={onOpenCaseList}
+                className={styles.tertiaryButton}
               >
                 퀴즈 목록 보기
               </button>

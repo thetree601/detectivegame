@@ -1,15 +1,24 @@
 'use client';
 
 import Image from 'next/image';
-import { getCaseById } from '@/utils/caseLoader';
+import { getCaseById, getCases } from '@/utils/caseLoader';
+import styles from '@/styles/components.module.css';
 
 interface StartScreenProps {
   caseId: number;
   onStartGame: () => void;
+  onOpenCaseList?: () => void;
 }
 
-export default function StartScreen({ caseId, onStartGame }: StartScreenProps) {
+export default function StartScreen({ caseId, onStartGame, onOpenCaseList }: StartScreenProps) {
   const caseData = getCaseById(caseId);
+  
+  // 모든 케이스의 총 질문 개수 계산
+  const allCases = getCases();
+  const totalQuestions = allCases.cases.reduce(
+    (total, case_) => total + case_.questions.length,
+    0
+  );
 
   if (!caseData) {
     return <div>케이스를 찾을 수 없습니다.</div>;
@@ -19,36 +28,47 @@ export default function StartScreen({ caseId, onStartGame }: StartScreenProps) {
   const startImagePath = '/images/그녀의_20260106_175453_0000.png';
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+    <div className={styles.startScreen}>
+      {/* 케이스 목록 버튼 - 상단 우측 */}
+      {onOpenCaseList && (
+        <button
+          onClick={onOpenCaseList}
+          className={styles.caseListButton}
+          aria-label="케이스 목록 보기"
+        >
+          📋 케이스 목록
+        </button>
+      )}
+
       {/* 대표 이미지 영역 */}
-      <div className="flex-1 relative overflow-hidden">
-        <div className="absolute inset-0">
+      <div className={styles.startImageSection}>
+        <div className={styles.startImageOverlay}>
           <Image
             src={startImagePath}
             alt="그녀의 명탐정 노트"
             fill
-            className="object-cover opacity-90"
+            className={styles.startImage}
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+          <div className={styles.startGradientOverlay} />
         </div>
         
         {/* 타이틀 오버레이 */}
-        <div className="absolute bottom-0 left-0 right-0 p-8 pb-16">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 drop-shadow-lg">
+        <div className={styles.startTitleSection}>
+          <h1 className={styles.startTitle}>
             그녀의 명탐정 노트
           </h1>
-          <p className="text-gray-200 text-lg drop-shadow-md">
-            총 {caseData.questions.length}개의 질문이 기다리고 있습니다
+          <p className={styles.startSubtitle}>
+            총 {totalQuestions}개의 질문이 기다리고 있습니다
           </p>
         </div>
       </div>
 
       {/* 시작 버튼 영역 */}
-      <div className="p-6 bg-gray-900 border-t border-gray-700">
+      <div className={styles.startButtonSection}>
         <button
           onClick={onStartGame}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]"
+          className={styles.startButton}
         >
           🕵️ 게임 시작하기
         </button>
