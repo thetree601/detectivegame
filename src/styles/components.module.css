@@ -49,15 +49,15 @@
   .questionPanel {
     padding: 1.5rem;
   }
-  
+
   .questionNumber {
     font-size: 0.875rem;
   }
-  
+
   .questionTitle {
     font-size: 1.25rem;
   }
-  
+
   .questionHint {
     font-size: 0.875rem;
   }
@@ -98,7 +98,9 @@
   max-width: 28rem;
   width: 100%;
   margin: 0 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -149,19 +151,19 @@
   .feedbackModal {
     padding: 2rem;
   }
-  
+
   .modalIcon {
     font-size: 3.75rem;
   }
-  
+
   .modalTitle {
     font-size: 1.5rem;
   }
-  
+
   .modalExplanation {
     font-size: 1rem;
   }
-  
+
   .modalMessage {
     font-size: 1rem;
   }
@@ -274,7 +276,12 @@
 .startGradientOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, #000000, transparent, transparent); /* 검은색으로 변경 */
+  background: linear-gradient(
+    to top,
+    #000000,
+    transparent,
+    transparent
+  ); /* 검은색으로 변경 */
 }
 
 .startTitleSection {
@@ -367,7 +374,7 @@
   .startTitle {
     font-size: 2.25rem;
   }
-  
+
   .caseListButton {
     top: 1.5rem;
     right: 1.5rem;
@@ -386,7 +393,9 @@
   max-width: 28rem;
   width: 100%;
   margin: 0 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -401,12 +410,35 @@
 }
 
 .caseListScrollContainer {
-  max-height: 60vh;
+  max-height: 400px; /* 약 5개 항목이 보이도록 고정 높이 설정 */
   overflow-y: auto;
+  overflow-x: hidden;
   margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  /* 스크롤바 스타일링 */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* 웹킷 브라우저용 스크롤바 스타일 */
+.caseListScrollContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.caseListScrollContainer::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.caseListScrollContainer::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.caseListScrollContainer::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .caseListItem {
@@ -438,11 +470,11 @@
   .caseListModal {
     padding: 2rem;
   }
-  
+
   .caseListTitle {
     font-size: 1.5rem;
   }
-  
+
   .caseListItem {
     font-size: 1.125rem;
     padding: 1.25rem;
