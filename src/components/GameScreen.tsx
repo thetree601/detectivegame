@@ -15,6 +15,18 @@ interface GameScreenProps {
   onGoToMain?: () => void;
 }
 
+// 이미지 preload 유틸리티 함수
+const preloadImage = (src: string) => {
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'image';
+  link.href = src;
+  const existing = document.querySelector(`link[href="${src}"]`);
+  if (!existing) {
+    document.head.appendChild(link);
+  }
+};
+
 export default function GameScreen({
   caseId,
   initialQuestionId = 1,
@@ -27,7 +39,6 @@ export default function GameScreen({
   const [isCorrect, setIsCorrect] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  // 케이스가 변경되면 첫 번째 질문으로 리셋
   useEffect(() => {
     setCurrentQuestionId(1);
     setShowFeedback(false);
@@ -41,16 +52,20 @@ export default function GameScreen({
     currentQuestionId
   );
 
-  // 다음 질문/케이스 이미지 계산 (preload용)
+  // 케이스 변경 시 해당 이미지 즉시 preload
+  useEffect(() => {
+    if (caseData) {
+      preloadImage(caseData.image);
+    }
+  }, [caseData]);
+
   const getNextImageSrc = () => {
     if (!caseData || !currentQuestion) return undefined;
 
-    // 같은 케이스 내 다음 질문이 있으면 그 이미지
     if (currentQuestionId < caseData.questions.length) {
-      return caseData.image; // 같은 케이스는 같은 이미지
+      return caseData.image;
     }
 
-    // 다음 케이스가 있으면 다음 케이스 이미지
     const allCases = getCases();
     const currentCaseIndex = allCases.cases.findIndex(c => c.id === caseId);
     if (currentCaseIndex < allCases.cases.length - 1) {
@@ -93,7 +108,6 @@ export default function GameScreen({
       setShowAnswer(false);
       setIsCorrect(false);
     } else {
-      // 현재 케이스의 모든 질문 완료
       if (onCaseComplete) {
         onCaseComplete();
       } else {

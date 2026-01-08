@@ -11,7 +11,7 @@ interface ImageViewerProps {
   answerRegions: AnswerRegion[];
   onAnswerCorrect: () => void;
   onAnswerWrong: () => void;
-  nextImageSrc?: string; // 다음 질문 이미지 (preload용)
+  nextImageSrc?: string;
 }
 
 export default function ImageViewer({
@@ -25,29 +25,35 @@ export default function ImageViewer({
     width: 0,
     height: 0,
   });
+  const [imageLoaded, setImageLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
-  // 이미지 로드 시 실제 크기 가져오기
-  useEffect(() => {
-    const img = new window.Image();
-    img.src = imageSrc;
-    img.onload = () => {
-      setImageDimensions({
-        width: img.naturalWidth,
-        height: img.naturalHeight,
-      });
-    };
-  }, [imageSrc]);
+  // Next.js Image의 onLoad 이벤트 사용 (중복 로딩 제거)
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    setImageDimensions({
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+    });
+    setImageLoaded(true);
+  };
 
   // 다음 이미지 preload (현재 이미지 로드 완료 후)
   useEffect(() => {
-    if (!nextImageSrc) return;
+    if (!nextImageSrc || !imageLoaded) return;
 
-    // 현재 이미지가 로드된 후 다음 이미지를 미리 로드
-    const preloadImg = new window.Image();
-    preloadImg.src = nextImageSrc;
-  }, [nextImageSrc, imageSrc]);
+    // Next.js Image 최적화 URL을 사용한 preload
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = nextImageSrc;
+    document.head.appendChild(link);
+
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, [nextImageSrc, imageLoaded]);
 
   const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || imageDimensions.width === 0) return;
@@ -58,7 +64,6 @@ export default function ImageViewer({
       y: e.clientY,
     };
   
-    // 🔍 디버깅: 클릭 위치를 이미지 좌표로 변환
     const imageAspectRatio = imageDimensions.width / imageDimensions.height;
     const containerAspectRatio = containerRect.width / containerRect.height;
   
@@ -80,7 +85,6 @@ export default function ImageViewer({
     const imageX = (clickPos.x - containerRect.left - offsetX) / displayedWidth;
     const imageY = (clickPos.y - containerRect.top - offsetY) / displayedHeight;
   
-    // 콘솔에 좌표 출력
     console.log('클릭 좌표:', {
       x: imageX.toFixed(3),
       y: imageY.toFixed(3),
@@ -115,20 +119,10 @@ export default function ImageViewer({
         fill
         className="object-contain"
         priority
-        sizes="100vw"
-        quality={90}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
+        quality={85}
+        onLoad={handleImageLoad}
       />
-      {/* 다음 이미지 숨겨진 preload */}
-      {nextImageSrc && (
-        <Image
-          src={nextImageSrc}
-          alt=""
-          fill
-          className="hidden"
-          loading="eager"
-          quality={90}
-        />
-      )}
     </div>
   );
 }

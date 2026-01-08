@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Image from 'next/image';
 import { getCaseById, getCases } from '@/utils/caseLoader';
 import styles from '@/styles/components.module.css';
@@ -10,26 +11,49 @@ interface StartScreenProps {
   onOpenCaseList?: () => void;
 }
 
+// 이미지 preload 유틸리티 함수
+const preloadImage = (src: string) => {
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'image';
+  link.href = src;
+  const existing = document.querySelector(`link[href="${src}"]`);
+  if (!existing) {
+    document.head.appendChild(link);
+  }
+};
+
 export default function StartScreen({ caseId, onStartGame, onOpenCaseList }: StartScreenProps) {
   const caseData = getCaseById(caseId);
   
-  // 모든 케이스의 총 질문 개수 계산
   const allCases = getCases();
   const totalQuestions = allCases.cases.reduce(
     (total, case_) => total + case_.questions.length,
     0
   );
 
+  // 현재 케이스 이미지 preload
+  useEffect(() => {
+    if (caseData) {
+      preloadImage(caseData.image);
+    }
+  }, [caseData]);
+
+  // 게임 시작 버튼 hover 시 이미지 확실히 preload
+  const handleStartButtonHover = () => {
+    if (caseData) {
+      preloadImage(caseData.image);
+    }
+  };
+
   if (!caseData) {
     return <div>케이스를 찾을 수 없습니다.</div>;
   }
 
-  // 시작 화면 전용 이미지 경로
   const startImagePath = '/images/그녀의_20260106_175453_0000.png';
 
   return (
     <div className={styles.startScreen}>
-      {/* 케이스 목록 버튼 - 상단 우측 */}
       {onOpenCaseList && (
         <button
           onClick={onOpenCaseList}
@@ -40,7 +64,6 @@ export default function StartScreen({ caseId, onStartGame, onOpenCaseList }: Sta
         </button>
       )}
 
-      {/* 대표 이미지 영역 */}
       <div className={styles.startImageSection}>
         <div className={styles.startImageOverlay}>
           <Image
@@ -49,11 +72,12 @@ export default function StartScreen({ caseId, onStartGame, onOpenCaseList }: Sta
             fill
             className={styles.startImage}
             priority
+            sizes="100vw"
+            quality={85}
           />
           <div className={styles.startGradientOverlay} />
         </div>
         
-        {/* 타이틀 오버레이 */}
         <div className={styles.startTitleSection}>
           <h1 className={styles.startTitle}>
             그녀의 명탐정 노트
@@ -64,10 +88,10 @@ export default function StartScreen({ caseId, onStartGame, onOpenCaseList }: Sta
         </div>
       </div>
 
-      {/* 시작 버튼 영역 */}
       <div className={styles.startButtonSection}>
         <button
           onClick={onStartGame}
+          onMouseEnter={handleStartButtonHover}
           className={styles.startButton}
         >
           🕵️ 게임 시작하기
