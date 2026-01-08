@@ -14,6 +14,31 @@ interface ImageViewerProps {
   nextImageSrc?: string;
 }
 
+// 이미지 preload 유틸리티 함수 (개선: Set으로 중복 추적)
+const preloadedImages = new Set<string>();
+
+const preloadImage = (src: string) => {
+  // 이미 preload된 이미지는 스킵
+  if (preloadedImages.has(src)) {
+    return;
+  }
+
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'image';
+  link.href = src;
+  link.crossOrigin = 'anonymous'; // CORS 문제 방지
+  
+  // 에러 처리
+  link.onerror = () => {
+    console.warn('이미지 preload 실패:', src);
+    preloadedImages.delete(src);
+  };
+
+  document.head.appendChild(link);
+  preloadedImages.add(src);
+};
+
 export default function ImageViewer({
   imageSrc,
   answerRegions,
@@ -28,6 +53,7 @@ export default function ImageViewer({
   const [imageLoaded, setImageLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const preloadLinkRef = useRef<HTMLLinkElement | null>(null);
 
   // Next.js Image의 onLoad 이벤트 사용 (중복 로딩 제거)
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -43,15 +69,10 @@ export default function ImageViewer({
   useEffect(() => {
     if (!nextImageSrc || !imageLoaded) return;
 
-    // Next.js Image 최적화 URL을 사용한 preload
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'image';
-    link.href = nextImageSrc;
-    document.head.appendChild(link);
+    preloadImage(nextImageSrc);
 
     return () => {
-      document.head.removeChild(link);
+      // cleanup은 preloadImage 함수 내부에서 Set으로 관리하므로 별도 처리 불필요
     };
   }, [nextImageSrc, imageLoaded]);
 

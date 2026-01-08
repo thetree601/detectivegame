@@ -1,31 +1,198 @@
 import { supabase } from './supabase';
 import { CasesData, Case, Question, AnswerRegion } from './types';
 
-// DB에서 모든 케이스 데이터 가져오기
-export async function getCases(): Promise<CasesData> {
-  // 1. 승인된 케이스들 가져오기
+// 캐시 변수들
+let casesCache: CasesData | null = null;
+let casesCacheTime = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5분
+
+// 개별 케이스 캐시 (getCaseById용)
+const caseCache = new Map<number, { data: Case; time: number }>();
+
+// 로딩 중인 Promise 추적 (중복 요청 방지) - 추가
+let loadingPromise: Promise<CasesData> | null = null;
+
+// 케이스 목록만 빠르게 가져오기 (초기 로딩용) - 추가
+export async function getCasesListOnly(): Promise<Array<{ id: number; title: string; image_url: string }>> {
   const { data: cases, error: casesError } = await supabase
     .from('detective_puzzle_cases')
-    .select('*')
+    .select('id, title, image_url')
     .eq('status', 'approved')
     .order('id');
 
   if (casesError) {
-    console.error('케이스 로드 실패:', casesError);
+    console.error('케이스 목록 로드 실패:', casesError);
     throw casesError;
   }
 
-  if (!cases || cases.length === 0) {
-    return { cases: [] };
+  return cases || [];
+}
+
+// DB에서 모든 케이스 데이터 가져오기 (병렬 로딩으로 최적화)
+export async function getCases(): Promise<CasesData> {
+  // 캐시가 있고 5분 이내면 캐시 반환
+  if (casesCache && Date.now() - casesCacheTime < CACHE_DURATION) {
+    return casesCache;
   }
 
-  // 2. 모든 질문들 가져오기
-  const caseIds = cases.map((c) => c.id);
+  // 이미 로딩 중이면 기존 Promise 반환 (중복 요청 방지) - 추가
+  if (loadingPromise) {
+    return loadingPromise;
+  }
+
+  // 새로운 로딩 시작 - 수정
+  loadingPromise = (async () => {
+    try {
+      // 병렬로 모든 데이터 가져오기 (순차적이 아닌 동시에)
+      const [casesResult, questionsResult, answerRegionsResult] = await Promise.all([
+        // 1. 승인된 케이스들 가져오기
+        supabase
+          .from('detective_puzzle_cases')
+          .select('*')
+          .eq('status', 'approved')
+          .order('id'),
+        
+        // 2. 모든 질문들 가져오기 (케이스 ID 없이 먼저 가져오기)
+        supabase
+          .from('detective_puzzle_questions')
+          .select('*')
+          .order('case_id')
+          .order('question_number'),
+        
+        // 3. 모든 정답 영역들 가져오기
+        supabase
+          .from('detective_puzzle_answer_regions')
+          .select('*')
+          .order('question_id'),
+      ]);
+
+      const { data: cases, error: casesError } = casesResult;
+      const { data: questions, error: questionsError } = questionsResult;
+      const { data: answerRegions, error: regionsError } = answerRegionsResult;
+
+      if (casesError) {
+        console.error('케이스 로드 실패:', casesError);
+        throw casesError;
+      }
+
+      if (!cases || cases.length === 0) {
+        return { cases: [] };
+      }
+
+      // 승인된 케이스 ID만 필터링
+      const approvedCaseIds = new Set(cases.map((c) => c.id));
+      const filteredQuestions = questions?.filter((q) => approvedCaseIds.has(q.case_id)) || [];
+      const filteredAnswerRegions = answerRegions?.filter((r) => 
+        filteredQuestions.some((q) => q.id === r.question_id)
+      ) || [];
+
+      if (questionsError) {
+        console.error('질문 로드 실패:', questionsError);
+        throw questionsError;
+      }
+
+      if (regionsError) {
+        console.error('정답 영역 로드 실패:', regionsError);
+        throw regionsError;
+      }
+
+      // 데이터 조합
+      const casesWithQuestions: Case[] = cases.map((caseItem) => {
+        const caseQuestions = filteredQuestions
+          .filter((q) => q.case_id === caseItem.id)
+          .map((q) => {
+            const questionAnswerRegions = filteredAnswerRegions
+              .filter((r) => r.question_id === q.id)
+              .map((r): AnswerRegion => ({
+                x: Number(r.x),
+                y: Number(r.y),
+                width: Number(r.width),
+                height: Number(r.height),
+                description: r.description,
+              }));
+
+            return {
+              id: q.question_number,
+              text: q.text,
+              answerRegions: questionAnswerRegions,
+              explanation: q.explanation,
+            } as Question;
+          });
+
+        return {
+          id: caseItem.id,
+          title: caseItem.title,
+          image: caseItem.image_url,
+          questions: caseQuestions,
+        } as Case;
+      });
+
+      const result = { cases: casesWithQuestions };
+      
+      // 캐시 업데이트
+      casesCache = result;
+      casesCacheTime = Date.now();
+      
+      // 개별 케이스 캐시도 업데이트
+      casesWithQuestions.forEach((case_) => {
+        caseCache.set(case_.id, { data: case_, time: Date.now() });
+      });
+      
+      return result;
+    } finally {
+      // 로딩 완료 후 Promise 초기화 - 추가
+      loadingPromise = null;
+    }
+  })();
+
+  return loadingPromise;
+}
+
+// 특정 케이스 가져오기 (getCases 캐시 우선 활용)
+export async function getCaseById(id: number): Promise<Case | undefined> {
+  // 1. 개별 캐시 확인
+  const cached = caseCache.get(id);
+  if (cached && Date.now() - cached.time < CACHE_DURATION) {
+    return cached.data;
+  }
+
+  // 2. getCases 캐시 확인 (더 효율적)
+  if (casesCache && Date.now() - casesCacheTime < CACHE_DURATION) {
+    const case_ = casesCache.cases.find((c) => c.id === id);
+    if (case_) {
+      // 개별 캐시도 업데이트
+      caseCache.set(id, { data: case_, time: Date.now() });
+      return case_;
+    }
+  }
+
+  // 3. getCases가 로딩 중이면 기다리기 (캐시에 없을 때) - 추가
+  if (loadingPromise) {
+    const allCases = await loadingPromise;
+    const case_ = allCases.cases.find((c) => c.id === id);
+    if (case_) {
+      caseCache.set(id, { data: case_, time: Date.now() });
+      return case_;
+    }
+  }
+
+  // 4. 캐시에 없으면 개별 조회 (최후의 수단)
+  const { data: caseItem, error: caseError } = await supabase
+    .from('detective_puzzle_cases')
+    .select('*')
+    .eq('id', id)
+    .eq('status', 'approved')
+    .single();
+
+  if (caseError || !caseItem) {
+    console.error('케이스 로드 실패:', caseError);
+    return undefined;
+  }
+
   const { data: questions, error: questionsError } = await supabase
     .from('detective_puzzle_questions')
     .select('*')
-    .in('case_id', caseIds)
-    .order('case_id')
+    .eq('case_id', id)
     .order('question_number');
 
   if (questionsError) {
@@ -33,57 +200,53 @@ export async function getCases(): Promise<CasesData> {
     throw questionsError;
   }
 
-  // 3. 모든 정답 영역들 가져오기
   const questionIds = questions?.map((q) => q.id) || [];
-  const { data: answerRegions, error: regionsError } = await supabase
-    .from('detective_puzzle_answer_regions')
-    .select('*')
-    .in('question_id', questionIds)
-    .order('question_id');
+  let answerRegions: any[] = [];
+  
+  if (questionIds.length > 0) {
+    const { data: regions, error: regionsError } = await supabase
+      .from('detective_puzzle_answer_regions')
+      .select('*')
+      .in('question_id', questionIds)
+      .order('question_id');
 
-  if (regionsError) {
-    console.error('정답 영역 로드 실패:', regionsError);
-    throw regionsError;
+    if (regionsError) {
+      console.error('정답 영역 로드 실패:', regionsError);
+      throw regionsError;
+    }
+    answerRegions = regions || [];
   }
 
-  // 4. 데이터 조합
-  const casesWithQuestions: Case[] = cases.map((caseItem) => {
-    const caseQuestions = questions
-      ?.filter((q) => q.case_id === caseItem.id)
-      .map((q) => {
-        const questionAnswerRegions = answerRegions
-          ?.filter((r) => r.question_id === q.id)
-          .map((r): AnswerRegion => ({
-            x: Number(r.x),
-            y: Number(r.y),
-            width: Number(r.width),
-            height: Number(r.height),
-            description: r.description,
-          })) || [];
-
-        return {
-          id: q.question_number,
-          text: q.text,
-          answerRegions: questionAnswerRegions,
-          explanation: q.explanation,
-        } as Question;
-      }) || [];
+  const caseQuestions = questions?.map((q) => {
+    const questionAnswerRegions = answerRegions
+      .filter((r) => r.question_id === q.id)
+      .map((r): AnswerRegion => ({
+        x: Number(r.x),
+        y: Number(r.y),
+        width: Number(r.width),
+        height: Number(r.height),
+        description: r.description,
+      }));
 
     return {
-      id: caseItem.id,
-      title: caseItem.title,
-      image: caseItem.image_url,
-      questions: caseQuestions,
-    } as Case;
-  });
+      id: q.question_number,
+      text: q.text,
+      answerRegions: questionAnswerRegions,
+      explanation: q.explanation,
+    } as Question;
+  }) || [];
 
-  return { cases: casesWithQuestions };
-}
+  const result = {
+    id: caseItem.id,
+    title: caseItem.title,
+    image: caseItem.image_url,
+    questions: caseQuestions,
+  } as Case;
 
-// 특정 케이스 가져오기
-export async function getCaseById(id: number): Promise<Case | undefined> {
-  const cases = await getCases();
-  return cases.cases.find((case_) => case_.id === id);
+  // 캐시에 저장
+  caseCache.set(id, { data: result, time: Date.now() });
+
+  return result;
 }
 
 // 특정 케이스의 특정 질문 가져오기

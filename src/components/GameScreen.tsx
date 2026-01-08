@@ -16,16 +16,29 @@ interface GameScreenProps {
   onGoToMain?: () => void;
 }
 
-// 이미지 preload 유틸리티 함수
+// 이미지 preload 유틸리티 함수 (개선: Set으로 중복 추적)
+const preloadedImages = new Set<string>();
+
 const preloadImage = (src: string) => {
+  // 이미 preload된 이미지는 스킵
+  if (preloadedImages.has(src)) {
+    return;
+  }
+
   const link = document.createElement('link');
   link.rel = 'preload';
   link.as = 'image';
   link.href = src;
-  const existing = document.querySelector(`link[href="${src}"]`);
-  if (!existing) {
-    document.head.appendChild(link);
-  }
+  link.crossOrigin = 'anonymous'; // CORS 문제 방지
+  
+  // 에러 처리
+  link.onerror = () => {
+    console.warn('이미지 preload 실패:', src);
+    preloadedImages.delete(src);
+  };
+
+  document.head.appendChild(link);
+  preloadedImages.add(src);
 };
 
 export default function GameScreen({
