@@ -3,7 +3,7 @@
     {
       "id": 1,
       "title": "사건 1: 산장의 비밀",
-      "image": "/images/Picsart_26-01-05_17-10-52-392.jpg",
+      "image": "https://kfooigcdfqvpeuhlzwsa.supabase.co/storage/v1/object/public/detective_puzzle_images/admin/Picsart_26-01-05_17-10-52-392.jpg",
       "questions": [
         {
           "id": 1,
@@ -59,7 +59,7 @@
     {
       "id": 2,
       "title": "사건 2: 저택의 비밀",
-      "image": "/images/Picsart_26-01-05_19-25-26-143.jpg",
+      "image": "https://kfooigcdfqvpeuhlzwsa.supabase.co/storage/v1/object/public/detective_puzzle_images/admin/Picsart_26-01-05_19-25-26-143.jpg",
       "questions": [
         {
           "id": 1,
@@ -94,7 +94,7 @@
     {
       "id": 3,
       "title": "사건 3: 설산의 비밀",
-      "image": "/images/Picsart_26-01-05_21-17-45-526.jpg",
+      "image": "https://kfooigcdfqvpeuhlzwsa.supabase.co/storage/v1/object/public/detective_puzzle_images/admin/Picsart_26-01-05_21-17-45-526.jpg",
       "questions": [
         {
           "id": 1,
@@ -143,7 +143,7 @@
     {
       "id": 4,
       "title": "사건 4: 사건의 비밀",
-      "image": "/images/Picsart_26-01-05_23-17-53-127.jpg",
+      "image": "https://kfooigcdfqvpeuhlzwsa.supabase.co/storage/v1/object/public/detective_puzzle_images/admin/Picsart_26-01-05_23-17-53-127.jpg",
       "questions": [
         {
           "id": 1,
@@ -206,7 +206,7 @@
     {
       "id": 5,
       "title": "사건 5: 호텔의 비밀",
-      "image": "/images/Picsart_26-01-06_00-27-56-862.jpg",
+      "image": "https://kfooigcdfqvpeuhlzwsa.supabase.co/storage/v1/object/public/detective_puzzle_images/admin/Picsart_26-01-06_00-27-56-862.jpg",
       "questions": [
         {
           "id": 1,
@@ -255,7 +255,7 @@
     {
       "id": 6,
       "title": "사건 6: 부인의 비밀",
-      "image": "/images/Picsart_26-01-07_16-45-20-078.jpg",
+      "image": "https://kfooigcdfqvpeuhlzwsa.supabase.co/storage/v1/object/public/detective_puzzle_images/admin/Picsart_26-01-07_16-45-20-078.jpg",
       "questions": [
         {
           "id": 1,
@@ -304,7 +304,7 @@
     {
       "id": 7,
       "title": "사건 7: 죽음의 비밀",
-      "image": "/images/Picsart_26-01-07_16-46-30-700.jpg",
+      "image": "https://kfooigcdfqvpeuhlzwsa.supabase.co/storage/v1/object/public/detective_puzzle_images/admin/Picsart_26-01-07_16-46-30-700.jpg",
       "questions": [
         {
           "id": 1,
@@ -367,7 +367,7 @@
     {
       "id": 8,
       "title": "사건 8: 총성의 비밀",
-      "image": "/images/Picsart_26-01-06_23-10-37-824.jpg",
+      "image": "https://kfooigcdfqvpeuhlzwsa.supabase.co/storage/v1/object/public/detective_puzzle_images/admin/Picsart_26-01-06_23-10-37-824.jpg",
       "questions": [
         {
           "id": 1,
@@ -430,14 +430,14 @@
     {
       "id": 9,
       "title": "사건 9: 사고의 비밀",
-      "image": "/images/Picsart_26-01-05_17-56-39-894.jpg",
+      "image": "https://kfooigcdfqvpeuhlzwsa.supabase.co/storage/v1/object/public/detective_puzzle_images/admin/Picsart_26-01-05_17-56-39-894.jpg",
       "questions": [
         {
           "id": 1,
           "text": "대낮의 거리 위에서 교통사고가 발생했고, 사고를 낸 차량 속 남자는 죽어있다. 그러나 남자의 죽음은 교통사고로 인한 것은 아니라고 보이는데 무엇 때문에 그렇게 판단했을까?",
           "answerRegions": [
             {
-              "x": 0.700,
+              "x": 0.7,
               "y": 0.165,
               "width": 0.055,
               "height": 0.042,
@@ -452,7 +452,7 @@
           "answerRegions": [
             {
               "x": 0.105,
-              "y": 0.270,
+              "y": 0.27,
               "width": 0.19,
               "height": 0.11,
               "description": "차량 내부의 꽃"

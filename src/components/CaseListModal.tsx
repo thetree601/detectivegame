@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getCases, getCaseById } from '@/utils/caseLoader';
+import { CasesData } from '@/utils/types';
 import styles from '@/styles/components.module.css';
 
 interface CaseListModalProps {
@@ -16,7 +17,6 @@ const preloadImage = (src: string) => {
   link.rel = 'preload';
   link.as = 'image';
   link.href = src;
-  // 이미 존재하는지 확인
   const existing = document.querySelector(`link[href="${src}"]`);
   if (!existing) {
     document.head.appendChild(link);
@@ -28,33 +28,53 @@ export default function CaseListModal({
   onClose,
   onCaseSelect,
 }: CaseListModalProps) {
-  const cases = getCases();
+  const [cases, setCases] = useState<CasesData>({ cases: [] });
+  const [loading, setLoading] = useState(false);
 
-  // 모달이 열릴 때 모든 케이스 이미지 preload
+  // 모달이 열릴 때 케이스 데이터 로드
   useEffect(() => {
     if (isOpen) {
-      cases.cases.forEach((case_) => {
-        preloadImage(case_.image);
-      });
+      (async () => {
+        setLoading(true);
+        try {
+          const casesData = await getCases();
+          setCases(casesData);
+          
+          // 모든 케이스 이미지 preload
+          casesData.cases.forEach((case_) => {
+            preloadImage(case_.image);
+          });
+        } catch (error) {
+          console.error('케이스 로드 실패:', error);
+        } finally {
+          setLoading(false);
+        }
+      })();
     }
-  }, [isOpen, cases]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleCaseClick = (caseId: number) => {
-    const caseData = getCaseById(caseId);
-    if (caseData) {
-      // 클릭 시 해당 이미지 확실히 preload
-      preloadImage(caseData.image);
+  const handleCaseClick = async (caseId: number) => {
+    try {
+      const caseData = await getCaseById(caseId);
+      if (caseData) {
+        preloadImage(caseData.image);
+      }
+    } catch (error) {
+      console.error('케이스 로드 실패:', error);
     }
     onCaseSelect(caseId);
   };
 
-  const handleCaseHover = (caseId: number) => {
-    const caseData = getCaseById(caseId);
-    if (caseData) {
-      // hover 시 이미지 preload
-      preloadImage(caseData.image);
+  const handleCaseHover = async (caseId: number) => {
+    try {
+      const caseData = await getCaseById(caseId);
+      if (caseData) {
+        preloadImage(caseData.image);
+      }
+    } catch (error) {
+      console.error('케이스 로드 실패:', error);
     }
   };
 
@@ -71,19 +91,23 @@ export default function CaseListModal({
       <div className={styles.caseListModal} onClick={handleModalClick}>
         <h2 className={styles.caseListTitle}>케이스 선택</h2>
         <div className={styles.caseListScrollContainer}>
-          {cases.cases.map((case_) => {
-            const displayTitle = case_.title.replace(/^사건 \d+: /, '');
-            return (
-              <button
-                key={case_.id}
-                onClick={() => handleCaseClick(case_.id)}
-                onMouseEnter={() => handleCaseHover(case_.id)}
-                className={styles.caseListItem}
-              >
-                {case_.id}. {displayTitle}
-              </button>
-            );
-          })}
+          {loading ? (
+            <div>로딩 중...</div>
+          ) : (
+            cases.cases.map((case_) => {
+              const displayTitle = case_.title.replace(/^사건 \d+: /, '');
+              return (
+                <button
+                  key={case_.id}
+                  onClick={() => handleCaseClick(case_.id)}
+                  onMouseEnter={() => handleCaseHover(case_.id)}
+                  className={styles.caseListItem}
+                >
+                  {case_.id}. {displayTitle}
+                </button>
+              );
+            })
+          )}
         </div>
         <button onClick={onClose} className={styles.secondaryButton}>
           닫기

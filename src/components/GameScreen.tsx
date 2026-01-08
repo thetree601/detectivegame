@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import ImageViewer from './ImageViewer';
 import QuestionPanel from './QuestionPanel';
 import FeedbackModal from './FeedbackModal';
-import { getCaseById, getQuestionByCaseAndQuestionId, getCases } from '@/utils/caseLoader';
+import { getCaseById, getQuestionByCaseAndQuestionId } from '@/utils/caseLoader';
+import { Case, Question } from '@/utils/types';
 import styles from '@/styles/components.module.css';
 
 interface GameScreenProps {
@@ -38,7 +39,31 @@ export default function GameScreen({
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [caseData, setCaseData] = useState<Case | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [loading, setLoading] = useState(true);
 
+  // 케이스 데이터 로드
+  useEffect(() => {
+    async function loadCase() {
+      setLoading(true);
+      try {
+        const case_ = await getCaseById(caseId);
+        if (case_) {
+          setCaseData(case_);
+          const question = await getQuestionByCaseAndQuestionId(caseId, initialQuestionId);
+          setCurrentQuestion(question || null);
+        }
+      } catch (error) {
+        console.error('케이스 로드 실패:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCase();
+  }, [caseId, initialQuestionId]);
+
+  // 케이스 변경 시 첫 번째 질문으로 리셋
   useEffect(() => {
     setCurrentQuestionId(1);
     setShowFeedback(false);
@@ -46,11 +71,16 @@ export default function GameScreen({
     setIsCorrect(false);
   }, [caseId]);
 
-  const caseData = getCaseById(caseId);
-  const currentQuestion = getQuestionByCaseAndQuestionId(
-    caseId,
-    currentQuestionId
-  );
+  // 질문 변경 시 데이터 업데이트
+  useEffect(() => {
+    async function loadQuestion() {
+      if (caseId && currentQuestionId) {
+        const question = await getQuestionByCaseAndQuestionId(caseId, currentQuestionId);
+        setCurrentQuestion(question || null);
+      }
+    }
+    loadQuestion();
+  }, [caseId, currentQuestionId]);
 
   // 케이스 변경 시 해당 이미지 즉시 preload
   useEffect(() => {
@@ -66,18 +96,16 @@ export default function GameScreen({
       return caseData.image;
     }
 
-    const allCases = getCases();
-    const currentCaseIndex = allCases.cases.findIndex(c => c.id === caseId);
-    if (currentCaseIndex < allCases.cases.length - 1) {
-      const nextCase = allCases.cases[currentCaseIndex + 1];
-      return nextCase.image;
-    }
-
+    // 다음 케이스 이미지 가져오기 (비동기 처리 필요하지만 일단 undefined 반환)
     return undefined;
   };
 
+  if (loading) {
+    return <div className={styles.gameScreen}>로딩 중...</div>;
+  }
+
   if (!caseData || !currentQuestion) {
-    return <div>케이스를 찾을 수 없습니다.</div>;
+    return <div className={styles.gameScreen}>케이스를 찾을 수 없습니다.</div>;
   }
 
   const handleAnswerCorrect = () => {

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { getCaseById, getCases } from '@/utils/caseLoader';
+import { Case } from '@/utils/types';
 import styles from '@/styles/components.module.css';
 
 interface StartScreenProps {
@@ -24,13 +25,37 @@ const preloadImage = (src: string) => {
 };
 
 export default function StartScreen({ caseId, onStartGame, onOpenCaseList }: StartScreenProps) {
-  const caseData = getCaseById(caseId);
-  
-  const allCases = getCases();
-  const totalQuestions = allCases.cases.reduce(
-    (total, case_) => total + case_.questions.length,
-    0
-  );
+  const [caseData, setCaseData] = useState<Case | null>(null);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // 케이스 데이터 로드
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      try {
+        const [case_, allCases] = await Promise.all([
+          getCaseById(caseId),
+          getCases(),
+        ]);
+        
+        if (case_) {
+          setCaseData(case_);
+        }
+        
+        const total = allCases.cases.reduce(
+          (total, case_) => total + case_.questions.length,
+          0
+        );
+        setTotalQuestions(total);
+      } catch (error) {
+        console.error('데이터 로드 실패:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [caseId]);
 
   // 현재 케이스 이미지 preload
   useEffect(() => {
@@ -46,8 +71,8 @@ export default function StartScreen({ caseId, onStartGame, onOpenCaseList }: Sta
     }
   };
 
-  if (!caseData) {
-    return <div>케이스를 찾을 수 없습니다.</div>;
+  if (loading) {
+    return <div className={styles.startScreen}>로딩 중...</div>;
   }
 
   const startImagePath = '/images/그녀의_20260106_175453_0000.png';

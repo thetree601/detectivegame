@@ -6,9 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "upload-images": "tsx scripts/upload-images.ts",
+    "migrate-cases": "tsx scripts/migrate-cases.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.90.0",
     "next": "14.2.32",
     "react": "^18",
     "react-dom": "^18"
@@ -17,12 +20,14 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "dotenv": "^17.2.3",
     "eslint": "^8",
     "eslint-config-next": "14.2.32",
     "eslint-config-prettier": "^10.1.8",
     "postcss": "^8",
     "prettier": "^3.7.4",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
