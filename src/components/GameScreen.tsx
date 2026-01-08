@@ -1,12 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import ImageViewer from './ImageViewer';
-import QuestionPanel from './QuestionPanel';
-import FeedbackModal from './FeedbackModal';
-import { getCaseById, getQuestionByCaseAndQuestionId } from '@/utils/caseLoader';
-import { Case, Question } from '@/utils/types';
-import styles from '@/styles/components.module.css';
+import { useState, useEffect } from "react";
+import ImageViewer from "./ImageViewer";
+import QuestionPanel from "./QuestionPanel";
+import FeedbackModal from "./FeedbackModal";
+import {
+  getCaseById,
+  getQuestionByCaseAndQuestionId,
+} from "@/utils/caseLoader";
+import { Case, Question } from "@/utils/types";
+import styles from "@/styles/components.module.css";
 
 interface GameScreenProps {
   caseId: number;
@@ -25,15 +28,15 @@ const preloadImage = (src: string) => {
     return;
   }
 
-  const link = document.createElement('link');
-  link.rel = 'preload';
-  link.as = 'image';
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = "image";
   link.href = src;
-  link.crossOrigin = 'anonymous'; // CORS 문제 방지
-  
+  link.crossOrigin = "anonymous"; // CORS 문제 방지
+
   // 에러 처리
   link.onerror = () => {
-    console.warn('이미지 preload 실패:', src);
+    console.warn("이미지 preload 실패:", src);
     preloadedImages.delete(src);
   };
 
@@ -64,11 +67,14 @@ export default function GameScreen({
         const case_ = await getCaseById(caseId);
         if (case_) {
           setCaseData(case_);
-          const question = await getQuestionByCaseAndQuestionId(caseId, initialQuestionId);
+          const question = await getQuestionByCaseAndQuestionId(
+            caseId,
+            initialQuestionId
+          );
           setCurrentQuestion(question || null);
         }
       } catch (error) {
-        console.error('케이스 로드 실패:', error);
+        console.error("케이스 로드 실패:", error);
       } finally {
         setLoading(false);
       }
@@ -88,7 +94,10 @@ export default function GameScreen({
   useEffect(() => {
     async function loadQuestion() {
       if (caseId && currentQuestionId) {
-        const question = await getQuestionByCaseAndQuestionId(caseId, currentQuestionId);
+        const question = await getQuestionByCaseAndQuestionId(
+          caseId,
+          currentQuestionId
+        );
         setCurrentQuestion(question || null);
       }
     }
@@ -152,7 +161,7 @@ export default function GameScreen({
       if (onCaseComplete) {
         onCaseComplete();
       } else {
-        alert('모든 질문을 완료했습니다!');
+        alert("모든 질문을 완료했습니다!");
       }
       setShowFeedback(false);
     }
@@ -162,7 +171,7 @@ export default function GameScreen({
     if (onOpenCaseList) {
       onOpenCaseList();
     } else {
-      window.location.href = '/';
+      window.location.href = "/";
     }
   };
 
@@ -170,7 +179,7 @@ export default function GameScreen({
     if (onGoToMain) {
       onGoToMain();
     } else {
-      window.location.href = '/';
+      window.location.href = "/";
     }
   };
 

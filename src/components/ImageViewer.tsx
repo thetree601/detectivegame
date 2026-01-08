@@ -53,7 +53,6 @@ export default function ImageViewer({
   const [imageLoaded, setImageLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  const preloadLinkRef = useRef<HTMLLinkElement | null>(null);
 
   // Next.js Image의 onLoad 이벤트 사용 (중복 로딩 제거)
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
