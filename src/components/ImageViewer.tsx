@@ -11,6 +11,7 @@ interface ImageViewerProps {
   answerRegions: AnswerRegion[];
   onAnswerCorrect: () => void;
   onAnswerWrong: () => void;
+  nextImageSrc?: string; // 다음 질문 이미지 (preload용)
 }
 
 export default function ImageViewer({
@@ -18,6 +19,7 @@ export default function ImageViewer({
   answerRegions,
   onAnswerCorrect,
   onAnswerWrong,
+  nextImageSrc,
 }: ImageViewerProps) {
   const [imageDimensions, setImageDimensions] = useState({
     width: 0,
@@ -37,6 +39,15 @@ export default function ImageViewer({
       });
     };
   }, [imageSrc]);
+
+  // 다음 이미지 preload (현재 이미지 로드 완료 후)
+  useEffect(() => {
+    if (!nextImageSrc) return;
+
+    // 현재 이미지가 로드된 후 다음 이미지를 미리 로드
+    const preloadImg = new window.Image();
+    preloadImg.src = nextImageSrc;
+  }, [nextImageSrc, imageSrc]);
 
   const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || imageDimensions.width === 0) return;
@@ -77,8 +88,6 @@ export default function ImageViewer({
       pixelY: clickPos.y,
     });
   
-    // 케이스 3의 모든 질문은 정답 처리 (위치 확인 완료)
-  
     const isCorrect = checkAnswer(
       clickPos,
       answerRegions,
@@ -106,7 +115,20 @@ export default function ImageViewer({
         fill
         className="object-contain"
         priority
+        sizes="100vw"
+        quality={90}
       />
+      {/* 다음 이미지 숨겨진 preload */}
+      {nextImageSrc && (
+        <Image
+          src={nextImageSrc}
+          alt=""
+          fill
+          className="hidden"
+          loading="eager"
+          quality={90}
+        />
+      )}
     </div>
   );
 }

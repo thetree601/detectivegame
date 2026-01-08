@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import ImageViewer from './ImageViewer';
 import QuestionPanel from './QuestionPanel';
 import FeedbackModal from './FeedbackModal';
-import { getCaseById, getQuestionByCaseAndQuestionId } from '@/utils/caseLoader';
+import { getCaseById, getQuestionByCaseAndQuestionId, getCases } from '@/utils/caseLoader';
 import styles from '@/styles/components.module.css';
 
 interface GameScreenProps {
@@ -41,6 +41,26 @@ export default function GameScreen({
     currentQuestionId
   );
 
+  // 다음 질문/케이스 이미지 계산 (preload용)
+  const getNextImageSrc = () => {
+    if (!caseData || !currentQuestion) return undefined;
+
+    // 같은 케이스 내 다음 질문이 있으면 그 이미지
+    if (currentQuestionId < caseData.questions.length) {
+      return caseData.image; // 같은 케이스는 같은 이미지
+    }
+
+    // 다음 케이스가 있으면 다음 케이스 이미지
+    const allCases = getCases();
+    const currentCaseIndex = allCases.cases.findIndex(c => c.id === caseId);
+    if (currentCaseIndex < allCases.cases.length - 1) {
+      const nextCase = allCases.cases[currentCaseIndex + 1];
+      return nextCase.image;
+    }
+
+    return undefined;
+  };
+
   if (!caseData || !currentQuestion) {
     return <div>케이스를 찾을 수 없습니다.</div>;
   }
@@ -74,11 +94,9 @@ export default function GameScreen({
       setIsCorrect(false);
     } else {
       // 현재 케이스의 모든 질문 완료
-      // onCaseComplete가 있으면 호출 (다음 케이스로 이동 또는 전체 완료 처리)
       if (onCaseComplete) {
         onCaseComplete();
       } else {
-        // fallback: onCaseComplete가 없으면 기본 메시지
         alert('모든 질문을 완료했습니다!');
       }
       setShowFeedback(false);
@@ -89,7 +107,6 @@ export default function GameScreen({
     if (onOpenCaseList) {
       onOpenCaseList();
     } else {
-      // fallback: 기존 동작 유지
       window.location.href = '/';
     }
   };
@@ -98,7 +115,6 @@ export default function GameScreen({
     if (onGoToMain) {
       onGoToMain();
     } else {
-      // fallback: onGoToMain이 없으면 기본 동작
       window.location.href = '/';
     }
   };
@@ -116,6 +132,7 @@ export default function GameScreen({
           answerRegions={currentQuestion.answerRegions}
           onAnswerCorrect={handleAnswerCorrect}
           onAnswerWrong={handleAnswerWrong}
+          nextImageSrc={getNextImageSrc()}
         />
       </div>
       <FeedbackModal
