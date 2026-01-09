@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getCases } from "@/utils/caseLoader";
 import { CasesData } from "@/utils/types";
+import { preloadImage, preloadImages } from "@/utils/imagePreloader";
 import styles from "@/styles/components.module.css";
 
 interface CaseListModalProps {
@@ -10,31 +11,6 @@ interface CaseListModalProps {
   onClose: () => void;
   onCaseSelect: (caseId: number) => void;
 }
-
-// 이미지 preload 유틸리티 함수 (Set으로 중복 추적)
-const preloadedImages = new Set<string>();
-
-const preloadImage = (src: string) => {
-  // 이미 preload된 이미지는 스킵 (중복 방지)
-  if (preloadedImages.has(src)) {
-    return;
-  }
-
-  const link = document.createElement("link");
-  link.rel = "preload";
-  link.as = "image";
-  link.href = src;
-  link.crossOrigin = "anonymous"; // CORS 문제 방지
-
-  // 에러 처리
-  link.onerror = () => {
-    console.warn("이미지 preload 실패:", src);
-    preloadedImages.delete(src);
-  };
-
-  document.head.appendChild(link);
-  preloadedImages.add(src);
-};
 
 export default function CaseListModal({
   isOpen,
@@ -54,9 +30,7 @@ export default function CaseListModal({
           setCases(casesData);
 
           // 모든 케이스 이미지를 미리 preload (딜레이 방지)
-          casesData.cases.forEach((case_) => {
-            preloadImage(case_.image);
-          });
+          preloadImages(casesData.cases.map((case_) => case_.image));
         } catch (error) {
           console.error("케이스 로드 실패:", error);
         } finally {
