@@ -19,7 +19,7 @@ export default function StartScreen({
   onOpenCaseList,
   onOpenAuth,
 }: StartScreenProps) {
-  const { caseData, totalQuestions } = useCaseData({ caseId });
+  const { caseData } = useCaseData({ caseId });
   const { signOut, isAuthenticated } = useAuth();
 
   // 게임 시작 버튼 hover 시 이미지 확실히 preload
@@ -83,25 +83,15 @@ export default function StartScreen({
           />
           <div className={styles.startGradientOverlay} />
         </div>
-
-        <div className={styles.startTitleSection}>
-          <h1 className={styles.startTitle}>그녀의 명탐정 노트</h1>
-          <p className={styles.startSubtitle}>
-            {totalQuestions > 0
-              ? `총 ${totalQuestions}개의 질문이 기다리고 있습니다`
-              : "질문을 불러오는 중..."}
-          </p>
+        <div className={styles.startButtonSection}>
+          <button
+            onClick={onStartGame}
+            onMouseEnter={handleStartButtonHover}
+            className={styles.startButton}
+          >
+            🕵️ 게임 시작하기
+          </button>
         </div>
-      </div>
-
-      <div className={styles.startButtonSection}>
-        <button
-          onClick={onStartGame}
-          onMouseEnter={handleStartButtonHover}
-          className={styles.startButton}
-        >
-          🕵️ 게임 시작하기
-        </button>
       </div>
     </div>
   );

@@ -256,10 +256,9 @@
   position: relative;
   overflow: hidden;
   width: 100%;
-  height: calc(100vh - 120px);
+  height: 100vh;
   background: #000000; /* 이미지 뒤 배경을 검은색으로 명시 */
   /* 작은 화면에서는 전체 너비 사용 */
-  max-height: calc(100vh - 120px);
 }
 
 .startImageOverlay {
@@ -276,42 +275,16 @@
 .startGradientOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    #000000,
-    transparent,
-    transparent
-  ); /* 검은색으로 변경 */
 }
 
-.startTitleSection {
+.startButtonSection {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 2rem;
-  padding-bottom: 4rem;
-}
-
-.startTitle {
-  font-size: 1.875rem;
-  font-weight: bold;
-  color: white;
-  margin-bottom: 1rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.startSubtitle {
-  color: #e5e7eb;
-  font-size: 1.125rem;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.startButtonSection {
-  padding: 1.5rem;
-  background: #111827;
-  border-top: 1px solid #374151;
+  padding: 0.75rem 1.5rem;
   width: 100%;
+  z-index: 10;
   /* 작은 화면에서는 전체 너비 사용 */
 }
 
