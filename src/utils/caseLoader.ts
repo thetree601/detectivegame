@@ -93,30 +93,6 @@ export async function getTotalQuestionsCount(): Promise<number> {
 }
 
 /**
- * AnswerRegion 배열을 변환하는 헬퍼 함수
- */
-function transformAnswerRegions(
-  answerRegions: Array<{
-    question_id: number;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    description: string | null;
-  }>
-): AnswerRegion[] {
-  return answerRegions.map(
-    (r): AnswerRegion => ({
-      x: Number(r.x),
-      y: Number(r.y),
-      width: Number(r.width),
-      height: Number(r.height),
-      description: r.description || "",
-    })
-  );
-}
-
-/**
  * Question 배열을 변환하는 헬퍼 함수
  */
 function transformQuestions(
@@ -181,9 +157,22 @@ function transformCase(
  * 데이터를 조합하여 Case 배열로 변환
  */
 function combineCaseData(
-  cases: any[],
-  questions: any[],
-  answerRegions: any[]
+  cases: Array<{ id: number; title: string; image_url: string }>,
+  questions: Array<{
+    id: number;
+    question_number: number;
+    text: string;
+    explanation: string;
+    case_id: number;
+  }>,
+  answerRegions: Array<{
+    question_id: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    description: string | null;
+  }>
 ): Case[] {
   const approvedCaseIds = new Set(cases.map((c) => c.id));
   const filteredQuestions =

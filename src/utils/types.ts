@@ -23,3 +23,14 @@ export interface AnswerRegion {
   export interface CasesData {
     cases: Case[];
   }
+
+  export interface UserProgress {
+    id: number;
+    user_id: string | null;
+    session_id: string | null;
+    case_id: number;
+    current_question_id: number;
+    completed_questions: number[];
+    last_updated_at: string;
+    created_at: string;
+  }

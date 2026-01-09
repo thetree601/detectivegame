@@ -338,11 +338,17 @@
   transform: scale(0.98);
 }
 
-.caseListButton {
+.startScreenTopButtons {
   position: absolute;
   top: 1rem;
   right: 1rem;
   z-index: 10;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.caseListButton {
   background: rgba(37, 99, 235, 0.2);
   backdrop-filter: blur(10px);
   color: white;
@@ -368,6 +374,36 @@
   box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.3);
 }
 
+.authButton {
+  background: rgba(147, 51, 234, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.authButton:hover {
+  background: rgba(147, 51, 234, 0.3);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.4);
+}
+
+.authButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
 /* 반응형 */
 @media (min-width: 768px) {
   /* 큰 화면에서도 동일한 최대 너비 유지 (이미 .startScreen에 설정됨) */
@@ -375,9 +411,17 @@
     font-size: 2.25rem;
   }
 
-  .caseListButton {
+  .startScreenTopButtons {
     top: 1.5rem;
     right: 1.5rem;
+  }
+
+  .caseListButton {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .authButton {
     padding: 0.875rem 1.5rem;
     font-size: 1rem;
   }
@@ -478,5 +522,152 @@
   .caseListItem {
     font-size: 1.125rem;
     padding: 1.25rem;
+  }
+}
+
+/* ============================================
+   인증 모달
+   ============================================ */
+.authModal {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 1rem;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.authModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.authModalTitle {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 0;
+}
+
+.authModalClose {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.authModalClose:hover {
+  color: #1f2937;
+}
+
+.authModalClose:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.authModalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.authModalError {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  border: 1px solid #fecaca;
+}
+
+.authModalField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.authModalLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.authModalInput {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  color: #1f2937; /* 명시적 텍스트 색상 (다크모드에서도 검은색 유지) */
+  background: white; /* 명시적 배경색 (다크모드에서도 흰색 유지) */
+}
+
+.authModalInput::placeholder {
+  color: #9ca3af; /* placeholder 색상 */
+}
+
+.authModalInput:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.authModalInput:disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+  color: #6b7280; /* disabled 상태 텍스트 색상 */
+}
+
+.authModalFooter {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.authModalSwitch {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.authModalSwitch:hover {
+  color: #1d4ed8;
+}
+
+.authModalSwitch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .authModal {
+    padding: 2rem;
+  }
+
+  .authModalTitle {
+    font-size: 1.5rem;
   }
 }

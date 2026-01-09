@@ -54,8 +54,8 @@ export default function GameScreen({
     return <div className={styles.gameScreen}>케이스를 찾을 수 없습니다.</div>;
   }
 
-  const handleNext = () => {
-    const hasNext = handleNextQuestion();
+  const handleNext = async () => {
+    const hasNext = await handleNextQuestion();
     if (!hasNext) {
       if (onCaseComplete) {
         onCaseComplete();
