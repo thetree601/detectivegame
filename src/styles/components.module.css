@@ -509,6 +509,52 @@
   transform: scale(0.98);
 }
 
+/* 잠긴 케이스 스타일 */
+.caseListItemLocked {
+  background: #f3f4f6 !important;
+  color: #9ca3af !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.caseListItemLocked:hover {
+  background: #f3f4f6 !important;
+  border-color: #e5e7eb !important;
+  transform: none !important;
+}
+
+.caseListItemLocked:active {
+  transform: none !important;
+}
+
+/* 현재 진행 중인 케이스 강조 스타일 */
+.caseListItemCurrent {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+  border: 2px solid #2563eb !important;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1), 0 2px 4px -1px rgba(37, 99, 235, 0.06);
+  position: relative;
+}
+
+.caseListItemCurrent:hover {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+  border-color: #1d4ed8 !important;
+  box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.15), 0 4px 6px -1px rgba(37, 99, 235, 0.1);
+}
+
+/* 자물쇠 아이콘 스타일 */
+.lockIcon {
+  flex-shrink: 0;
+  color: #9ca3af;
+  margin-left: 0.5rem;
+}
+
+.caseListItemLocked .lockIcon {
+  color: #6b7280;
+}
+
 /* 반응형 */
 @media (min-width: 768px) {
   .caseListModal {

@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/utils/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserProgress } from "@/utils/types";
+import { getCases } from "@/utils/caseLoader";
 
 interface UseProgressReturn {
   saveProgress: (
@@ -11,6 +12,7 @@ interface UseProgressReturn {
   ) => Promise<void>;
   loadProgress: (caseId: number) => Promise<UserProgress | null>;
   clearProgress: (caseId: number) => Promise<void>;
+  getLastCompletedCaseId: () => Promise<number>;
   loading: boolean;
   error: string | null;
 }
@@ -189,10 +191,90 @@ export function useProgress(): UseProgressReturn {
     [getCurrentUserId, user]
   );
 
+  /**
+   * 가장 마지막에 완료한 케이스 ID 조회
+   * 완료 기준: 해당 케이스의 모든 질문이 completed_questions에 포함됨
+   * 완료된 케이스가 없으면 0 반환
+   */
+  const getLastCompletedCaseId = useCallback(async (): Promise<number> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const userId = getCurrentUserId();
+      if (!userId) {
+        // 사용자 ID가 없으면 완료된 케이스 없음
+        return 0;
+      }
+
+      // 모든 케이스 데이터 가져오기
+      const casesData = await getCases();
+      if (!casesData || casesData.cases.length === 0) {
+        return 0;
+      }
+
+      const isAuthenticated = !!user;
+      const query = supabase
+        .from("user_progress")
+        .select("case_id, completed_questions");
+
+      // 로그인 사용자면 user_id로, 비회원이면 session_id로 조회
+      if (isAuthenticated) {
+        query.eq("user_id", userId).is("session_id", null);
+      } else {
+        query.eq("session_id", userId).is("user_id", null);
+      }
+
+      const { data: allProgress, error: fetchError } = await query;
+
+      if (fetchError) {
+        // 에러가 발생해도 게임은 계속 진행되도록 0 반환
+        console.warn("진행 기록 조회 중 오류 (무시됨):", fetchError.message);
+        return 0;
+      }
+
+      if (!allProgress || allProgress.length === 0) {
+        return 0;
+      }
+
+      // 각 케이스의 완료 여부 확인
+      let lastCompletedCaseId = 0;
+
+      for (const case_ of casesData.cases) {
+        const progress = allProgress.find((p) => p.case_id === case_.id);
+        if (!progress) {
+          continue;
+        }
+
+        const completedQuestions = Array.isArray(progress.completed_questions)
+          ? progress.completed_questions
+          : [];
+        const totalQuestions = case_.questions.length;
+
+        // 모든 질문이 완료되었는지 확인
+        if (completedQuestions.length === totalQuestions && totalQuestions > 0) {
+          // 완료된 케이스 중 가장 높은 ID 저장
+          if (case_.id > lastCompletedCaseId) {
+            lastCompletedCaseId = case_.id;
+          }
+        }
+      }
+
+      return lastCompletedCaseId;
+    } catch (err: unknown) {
+      // 예상치 못한 에러인 경우 로그만 남기고 0 반환
+      console.error("완료된 케이스 조회 중 예상치 못한 오류:", err);
+      return 0;
+    } finally {
+      setLoading(false);
+    }
+  }, [getCurrentUserId, user]);
+
   return {
     saveProgress,
     loadProgress,
     clearProgress,
+    getLastCompletedCaseId,
     loading,
     error,
   };
