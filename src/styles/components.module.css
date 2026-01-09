@@ -661,6 +661,70 @@
   cursor: not-allowed;
 }
 
+.authModalDivider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.authModalDivider::before,
+.authModalDivider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.authModalDividerText {
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  background: white;
+}
+
+.authModalSocial {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.socialButton {
+  width: 100%;
+  background: white;
+  color: #1f2937;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.socialButton:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.socialButton:active {
+  transform: scale(0.98);
+}
+
+.socialButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f3f4f6;
+}
+
+.socialButtonText {
+  color: #1f2937;
+}
+
 /* 반응형 */
 @media (min-width: 768px) {
   .authModal {
@@ -669,5 +733,10 @@
 
   .authModalTitle {
     font-size: 1.5rem;
+  }
+
+  .socialButton {
+    padding: 1rem;
+    font-size: 1.125rem;
   }
 }

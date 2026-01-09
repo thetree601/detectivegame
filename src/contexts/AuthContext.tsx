@@ -12,6 +12,8 @@ interface AuthContextType {
   error: string | null;
   signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signInWithGoogle: () => Promise<{ error: AuthError | null }>;
+  signInWithKakao: () => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   getCurrentUserId: () => string | null; // user_id 또는 session_id 반환
   isAuthenticated: boolean;
@@ -282,6 +284,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: null };
   };
 
+  const signInWithGoogle = async () => {
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      return { error };
+    }
+
+    // OAuth는 리다이렉트되므로 여기서는 에러만 반환
+    // 실제 로그인 성공은 onAuthStateChange에서 처리됨
+    return { error: null };
+  };
+
+  const signInWithKakao = async () => {
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "kakao",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      return { error };
+    }
+
+    // OAuth는 리다이렉트되므로 여기서는 에러만 반환
+    // 실제 로그인 성공은 onAuthStateChange에서 처리됨
+    return { error: null };
+  };
+
   const signOut = async () => {
     setError(null);
     const { error } = await supabase.auth.signOut();
@@ -311,6 +351,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error,
     signUp,
     signIn,
+    signInWithGoogle,
+    signInWithKakao,
     signOut,
     getCurrentUserId,
     isAuthenticated: !!user,

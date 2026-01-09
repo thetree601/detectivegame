@@ -19,7 +19,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { signUp, signIn, error: authError } = useAuth();
+  const { signUp, signIn, signInWithGoogle, signInWithKakao, error: authError } = useAuth();
 
   if (!isOpen) return null;
 
@@ -184,6 +184,45 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               : "회원가입"}
           </button>
         </form>
+
+        <div className={styles.authModalDivider}>
+          <span className={styles.authModalDividerText}>또는</span>
+        </div>
+
+        <div className={styles.authModalSocial}>
+          <button
+            type="button"
+            onClick={async () => {
+              setError(null);
+              setLoading(true);
+              const { error } = await signInWithGoogle();
+              if (error) {
+                setError(error.message);
+                setLoading(false);
+              }
+            }}
+            className={styles.socialButton}
+            disabled={loading}
+          >
+            <span className={styles.socialButtonText}>Google로 로그인</span>
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              setError(null);
+              setLoading(true);
+              const { error } = await signInWithKakao();
+              if (error) {
+                setError(error.message);
+                setLoading(false);
+              }
+            }}
+            className={styles.socialButton}
+            disabled={loading}
+          >
+            <span className={styles.socialButtonText}>카카오로 로그인</span>
+          </button>
+        </div>
 
         <div className={styles.authModalFooter}>
           <button
