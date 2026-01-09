@@ -3,19 +3,27 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session, AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/utils/supabase";
+import { migrateAnonymousProgress } from "@/utils/migrateProgress";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   error: string | null;
-  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (
+    email: string,
+    password: string
+  ) => Promise<{ error: AuthError | null }>;
+  signIn: (
+    email: string,
+    password: string
+  ) => Promise<{ error: AuthError | null }>;
   signInWithGoogle: () => Promise<{ error: AuthError | null }>;
   signInWithKakao: () => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   getCurrentUserId: () => string | null; // user_id 반환 (익명 사용자 포함)
   isAuthenticated: boolean;
+  isAnonymousUser: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,14 +34,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-
   // 초기 세션 로드 및 익명 로그인
   useEffect(() => {
     async function initializeAuth() {
       try {
         // 현재 세션 확인
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
         if (sessionError) {
           console.error("세션 로드 실패:", sessionError);
           setError(sessionError.message);
@@ -50,8 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // 세션이 없으면 익명 로그인 시도
-        const { data: anonymousData, error: anonymousError } = await supabase.auth.signInAnonymously();
-        
+        const { data: anonymousData, error: anonymousError } =
+          await supabase.auth.signInAnonymously();
+
         if (anonymousError) {
           console.error("익명 로그인 실패:", anonymousError);
           setError(anonymousError.message);
@@ -65,7 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(anonymousData.user);
         }
       } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : "알 수 없는 오류";
+        const errorMessage =
+          err instanceof Error ? err.message : "알 수 없는 오류";
         console.error("인증 초기화 중 오류:", errorMessage);
         setError(errorMessage);
       } finally {
@@ -98,6 +110,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     setError(null);
+
+    // 회원가입 시도 전에 현재 익명 user_id 확보
+    const anonymousUserId =
+      user?.is_anonymous && user?.id ? user.id : null;
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -112,6 +129,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (data.session && data.user) {
       setSession(data.session);
       setUser(data.user);
+
+      // 익명 사용자에서 정식 계정으로 전환된 경우 마이그레이션 실행
+      if (anonymousUserId && data.user.id !== anonymousUserId) {
+        console.log(
+          "[회원가입] 익명 계정에서 정식 계정으로 전환 감지, 마이그레이션 시작"
+        );
+        migrateAnonymousProgress(anonymousUserId, data.user.id).then(
+          (result) => {
+            if (result.success) {
+              console.log("[회원가입] 진행 기록 마이그레이션 완료");
+            } else {
+              console.error(
+                "[회원가입] 진행 기록 마이그레이션 실패:",
+                result.error
+              );
+              // 마이그레이션 실패해도 회원가입은 성공 처리 (사용자 경험 우선)
+            }
+          }
+        );
+      }
     }
 
     return { error: null };
@@ -119,6 +156,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     setError(null);
+
+    // 로그인 시도 전에 현재 익명 user_id 확보
+    const anonymousUserId =
+      user?.is_anonymous && user?.id ? user.id : null;
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -133,6 +175,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (data.session && data.user) {
       setSession(data.session);
       setUser(data.user);
+
+      // 익명 사용자에서 정식 계정으로 전환된 경우 마이그레이션 실행
+      if (anonymousUserId && data.user.id !== anonymousUserId) {
+        console.log(
+          "[로그인] 익명 계정에서 정식 계정으로 전환 감지, 마이그레이션 시작"
+        );
+        migrateAnonymousProgress(anonymousUserId, data.user.id).then(
+          (result) => {
+            if (result.success) {
+              console.log("[로그인] 진행 기록 마이그레이션 완료");
+            } else {
+              console.error(
+                "[로그인] 진행 기록 마이그레이션 실패:",
+                result.error
+              );
+              // 마이그레이션 실패해도 로그인은 성공 처리 (사용자 경험 우선)
+            }
+          }
+        );
+      }
     }
 
     return { error: null };
@@ -179,7 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setError(null);
     const { error } = await supabase.auth.signOut();
-    
+
     if (error) {
       setError(error.message);
       throw error;
@@ -206,6 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     getCurrentUserId,
     isAuthenticated: !!user,
+    isAnonymousUser: user?.is_anonymous ?? false,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

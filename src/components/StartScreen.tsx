@@ -20,7 +20,7 @@ export default function StartScreen({
   onOpenAuth,
 }: StartScreenProps) {
   const { caseData } = useCaseData({ caseId });
-  const { signOut, isAuthenticated } = useAuth();
+  const { signOut, isAnonymousUser } = useAuth();
 
   // 게임 시작 버튼 hover 시 이미지 확실히 preload
   const handleStartButtonHover = () => {
@@ -32,17 +32,17 @@ export default function StartScreen({
   const startImagePath = "/images/그녀의_20260106_175453_0000.png";
 
   const handleAuthClick = async () => {
-    if (isAuthenticated) {
-      // 로그아웃
+    if (isAnonymousUser) {
+      // 익명 사용자: 로그인 모달 열기
+      if (onOpenAuth) {
+        onOpenAuth();
+      }
+    } else {
+      // 정식 로그인 사용자: 로그아웃
       try {
         await signOut();
       } catch (error) {
         console.error("로그아웃 실패:", error);
-      }
-    } else {
-      // 로그인 모달 열기
-      if (onOpenAuth) {
-        onOpenAuth();
       }
     }
   };
@@ -63,9 +63,9 @@ export default function StartScreen({
           <button
             onClick={handleAuthClick}
             className={styles.authButton}
-            aria-label={isAuthenticated ? "로그아웃" : "로그인"}
+            aria-label={isAnonymousUser ? "로그인" : "로그아웃"}
           >
-            {isAuthenticated ? "로그아웃" : "🔐 로그인"}
+            {isAnonymousUser ? "🔐 로그인" : "로그아웃"}
           </button>
         )}
       </div>

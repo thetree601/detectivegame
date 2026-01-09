@@ -19,7 +19,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { signUp, signIn, signInWithGoogle, signInWithKakao, error: authError } = useAuth();
+  const { signUp, signIn, signInWithGoogle, signInWithKakao, error: authError, user } = useAuth();
 
   if (!isOpen) return null;
 
@@ -195,10 +195,22 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             onClick={async () => {
               setError(null);
               setLoading(true);
+
+              // OAuth 시작 전에 현재 익명 user_id를 로컬 스토리지에 저장
+              if (user?.is_anonymous && user?.id) {
+                localStorage.setItem("pending_anonymous_user_id", user.id);
+                console.log(
+                  "[OAuth] 익명 user_id 저장:",
+                  user.id
+                );
+              }
+
               const { error } = await signInWithGoogle();
               if (error) {
                 setError(error.message);
                 setLoading(false);
+                // 에러 발생 시 로컬 스토리지 정리
+                localStorage.removeItem("pending_anonymous_user_id");
               }
             }}
             className={styles.socialButton}
@@ -211,10 +223,22 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             onClick={async () => {
               setError(null);
               setLoading(true);
+
+              // OAuth 시작 전에 현재 익명 user_id를 로컬 스토리지에 저장
+              if (user?.is_anonymous && user?.id) {
+                localStorage.setItem("pending_anonymous_user_id", user.id);
+                console.log(
+                  "[OAuth] 익명 user_id 저장:",
+                  user.id
+                );
+              }
+
               const { error } = await signInWithKakao();
               if (error) {
                 setError(error.message);
                 setLoading(false);
+                // 에러 발생 시 로컬 스토리지 정리
+                localStorage.removeItem("pending_anonymous_user_id");
               }
             }}
             className={styles.socialButton}

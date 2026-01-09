@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getCases } from "@/utils/caseLoader";
 import { CasesData } from "@/utils/types";
 import { preloadImage, preloadImages } from "@/utils/imagePreloader";
@@ -22,8 +22,18 @@ export default function CaseListModal({
   const [cases, setCases] = useState<CasesData>({ cases: [] });
   const [loading, setLoading] = useState(false);
   const [lastCompletedCaseId, setLastCompletedCaseId] = useState<number>(0);
-  const { getLastCompletedCaseId } = useProgress();
+  const [lastAccessibleCaseId, setLastAccessibleCaseId] = useState<number>(0);
+  const { getLastCompletedCaseId, getLastAccessibleCaseId } = useProgress();
   const { user, loading: authLoading } = useAuth();
+  // 최신 user와 authLoading 값을 추적하기 위한 ref
+  const userRef = useRef(user);
+  const authLoadingRef = useRef(authLoading);
+  
+  // ref를 최신 값으로 업데이트
+  useEffect(() => {
+    userRef.current = user;
+    authLoadingRef.current = authLoading;
+  }, [user, authLoading]);
 
   // 모달이 열릴 때 케이스 데이터 로드 및 모든 이미지 preload
   useEffect(() => {
@@ -31,12 +41,13 @@ export default function CaseListModal({
       (async () => {
         setLoading(true);
         try {
-          // 인증이 완료될 때까지 대기 (익명 로그인 포함)
-          if (authLoading) {
-            // 인증 로딩 중이면 잠시 대기
+          // 인증이 완료되고 user 객체가 설정될 때까지 대기 (익명 로그인 포함)
+          if (authLoadingRef.current || !userRef.current) {
+            // 인증 로딩 중이거나 user 객체가 없으면 대기
             await new Promise((resolve) => {
               const checkAuth = setInterval(() => {
-                if (!authLoading) {
+                // ref를 통해 최신 값 확인 (클로저 문제 해결)
+                if (!authLoadingRef.current && userRef.current) {
                   clearInterval(checkAuth);
                   resolve(undefined);
                 }
@@ -48,6 +59,9 @@ export default function CaseListModal({
               }, 5000);
             });
           }
+          
+          // 대기 후 최신 user 값 확인 (ref에서 가져옴)
+          const currentUser = userRef.current;
 
           const casesData = await getCases();
           setCases(casesData);
@@ -56,23 +70,49 @@ export default function CaseListModal({
           preloadImages(casesData.cases.map((case_) => case_.image));
 
           // 사용자가 있으면 진행 기록 조회 (익명 사용자 포함)
-          if (user) {
+          // currentUser는 ref에서 가져온 최신 값
+          if (currentUser) {
+            console.log("[CaseListModal] 사용자 확인됨, 진행 기록 조회 시작");
+            console.log("[CaseListModal] user:", currentUser);
+            console.log("[CaseListModal] user.id:", currentUser.id);
+            console.log(
+              "[CaseListModal] user.is_anonymous:",
+              currentUser.is_anonymous
+            );
+
             const lastCompleted = await getLastCompletedCaseId();
+            console.log(
+              "[CaseListModal] getLastCompletedCaseId() 반환값:",
+              lastCompleted
+            );
+            
+            // 완료된 케이스와 진행 중인 케이스 둘 다 확인
+            const lastAccessible = await getLastAccessibleCaseId();
+            console.log(
+              "[CaseListModal] getLastAccessibleCaseId() 반환값:",
+              lastAccessible
+            );
+            
+            // 별도로 저장 (getCaseLockStatus에서 구분하여 사용)
             setLastCompletedCaseId(lastCompleted);
+            setLastAccessibleCaseId(lastAccessible);
           } else {
             // 사용자가 없으면 완료된 케이스 없음
+            console.log("[CaseListModal] 사용자 없음 → 0 설정");
             setLastCompletedCaseId(0);
+            setLastAccessibleCaseId(0);
           }
         } catch (error) {
           console.error("케이스 로드 실패:", error);
           // 에러 발생 시 기본값 설정
           setLastCompletedCaseId(0);
+          setLastAccessibleCaseId(0);
         } finally {
           setLoading(false);
         }
       })();
     }
-  }, [isOpen, getLastCompletedCaseId, user, authLoading]);
+  }, [isOpen, getLastCompletedCaseId, getLastAccessibleCaseId, user, authLoading]);
 
   if (!isOpen) return null;
 
@@ -91,10 +131,20 @@ export default function CaseListModal({
   };
 
   // 케이스 잠금 상태 계산 함수
-  // 로직: 마지막 완료 케이스(N)를 기준으로, 케이스(N+1)은 열고, 케이스(N+2)부터 잠금
+  // 로직:
+  // - 완료된 케이스 N이면: 케이스 N+1까지 열림
+  // - 진행 중인 케이스 N이면: 케이스 N까지만 열림 (N+1은 잠김)
+  // - 둘 다 있으면: 각각 계산한 값 중 더 큰 값 사용
+  // - 둘 다 없으면: 케이스 1만 열림
   const getCaseLockStatus = (caseId: number) => {
-    // 완료된 케이스가 없으면 (lastCompletedCaseId = 0) 케이스 1만 열림
-    const unlockedThreshold = lastCompletedCaseId + 1;
+    // 완료된 케이스 기준으로 열 수 있는 최대 케이스
+    const completedThreshold = lastCompletedCaseId > 0 ? lastCompletedCaseId + 1 : 0;
+    // 진행 중인 케이스 기준으로 열 수 있는 최대 케이스
+    const accessibleThreshold = lastAccessibleCaseId > 0 ? lastAccessibleCaseId : 0;
+    
+    // 둘 중 더 큰 값 사용
+    const unlockedThreshold = Math.max(completedThreshold, accessibleThreshold, 1);
+    
     const isLocked = caseId > unlockedThreshold;
     const isCurrent = caseId === unlockedThreshold;
     return { isLocked, isCurrent };
@@ -128,7 +178,7 @@ export default function CaseListModal({
             cases.cases.map((case_) => {
               const displayTitle = case_.title.replace(/^사건 \d+: /, "");
               const { isLocked, isCurrent } = getCaseLockStatus(case_.id);
-              
+
               // 클래스명 조합
               let className = styles.caseListItem;
               if (isLocked) {
@@ -162,7 +212,14 @@ export default function CaseListModal({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <rect
+                        x="3"
+                        y="11"
+                        width="18"
+                        height="11"
+                        rx="2"
+                        ry="2"
+                      ></rect>
                       <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
                   )}

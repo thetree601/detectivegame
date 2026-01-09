@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
+import { migrateAnonymousProgress } from "@/utils/migrateProgress";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -30,6 +31,41 @@ export default function AuthCallback() {
         if (session) {
           // 로그인 성공
           setStatus("success");
+
+          // OAuth 로그인 성공 후 마이그레이션 처리
+          const anonymousUserId = localStorage.getItem(
+            "pending_anonymous_user_id"
+          );
+          const newUserId = session.user?.id;
+
+          if (
+            anonymousUserId &&
+            newUserId &&
+            anonymousUserId !== newUserId
+          ) {
+            console.log(
+              "[OAuth 콜백] 익명 계정에서 정식 계정으로 전환 감지, 마이그레이션 시작"
+            );
+            migrateAnonymousProgress(anonymousUserId, newUserId).then(
+              (result) => {
+                if (result.success) {
+                  console.log("[OAuth 콜백] 진행 기록 마이그레이션 완료");
+                } else {
+                  console.error(
+                    "[OAuth 콜백] 진행 기록 마이그레이션 실패:",
+                    result.error
+                  );
+                  // 마이그레이션 실패해도 로그인은 성공 처리 (사용자 경험 우선)
+                }
+                // 마이그레이션 완료 후 로컬 스토리지에서 익명 user_id 제거
+                localStorage.removeItem("pending_anonymous_user_id");
+              }
+            );
+          } else {
+            // 마이그레이션이 필요 없으면 바로 로컬 스토리지 정리
+            localStorage.removeItem("pending_anonymous_user_id");
+          }
+
           // 1초 후 홈으로 리다이렉트
           setTimeout(() => {
             router.push("/");
@@ -41,6 +77,41 @@ export default function AuthCallback() {
             const { data: { session: retrySession } } = await supabase.auth.getSession();
             if (retrySession) {
               setStatus("success");
+
+              // OAuth 로그인 성공 후 마이그레이션 처리
+              const anonymousUserId = localStorage.getItem(
+                "pending_anonymous_user_id"
+              );
+              const newUserId = retrySession.user?.id;
+
+              if (
+                anonymousUserId &&
+                newUserId &&
+                anonymousUserId !== newUserId
+              ) {
+                console.log(
+                  "[OAuth 콜백] 익명 계정에서 정식 계정으로 전환 감지, 마이그레이션 시작"
+                );
+                migrateAnonymousProgress(anonymousUserId, newUserId).then(
+                  (result) => {
+                    if (result.success) {
+                      console.log("[OAuth 콜백] 진행 기록 마이그레이션 완료");
+                    } else {
+                      console.error(
+                        "[OAuth 콜백] 진행 기록 마이그레이션 실패:",
+                        result.error
+                      );
+                      // 마이그레이션 실패해도 로그인은 성공 처리 (사용자 경험 우선)
+                    }
+                    // 마이그레이션 완료 후 로컬 스토리지에서 익명 user_id 제거
+                    localStorage.removeItem("pending_anonymous_user_id");
+                  }
+                );
+              } else {
+                // 마이그레이션이 필요 없으면 바로 로컬 스토리지 정리
+                localStorage.removeItem("pending_anonymous_user_id");
+              }
+
               setTimeout(() => {
                 router.push("/");
               }, 1000);

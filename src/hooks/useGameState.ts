@@ -12,7 +12,10 @@ interface UseGameStateProps {
   initialQuestionId?: number;
 }
 
-export function useGameState({ caseId, initialQuestionId = 1 }: UseGameStateProps) {
+export function useGameState({
+  caseId,
+  initialQuestionId = 1,
+}: UseGameStateProps) {
   const [currentQuestionId, setCurrentQuestionId] = useState(initialQuestionId);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -48,10 +51,10 @@ export function useGameState({ caseId, initialQuestionId = 1 }: UseGameStateProp
             // 저장된 진행 기록이 있으면 해당 질문부터 시작
             const savedQuestionId = progress.current_question_id;
             const savedCompleted = progress.completed_questions || [];
-            
+
             setCurrentQuestionId(savedQuestionId);
             setCompletedQuestions(savedCompleted);
-            
+
             const question = await getQuestionByCaseAndQuestionId(
               caseId,
               savedQuestionId
@@ -64,7 +67,7 @@ export function useGameState({ caseId, initialQuestionId = 1 }: UseGameStateProp
               initialQuestionId
             );
             setCurrentQuestion(question || null);
-            
+
             // 케이스 전환 시 첫 번째 질문 상태를 저장하여 케이스 전환을 명시적으로 기록
             progressLoadedRef.current = true;
             try {
@@ -74,7 +77,7 @@ export function useGameState({ caseId, initialQuestionId = 1 }: UseGameStateProp
               // 에러가 발생해도 게임은 계속 진행
             }
           }
-          
+
           if (progress) {
             progressLoadedRef.current = true;
           }
