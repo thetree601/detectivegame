@@ -19,13 +19,12 @@ interface UseProgressReturn {
 
 /**
  * 진행 기록 저장/불러오기 훅
- * 로그인 사용자: user_id로 저장
- * 비회원: session_id로 저장
+ * 모든 사용자(로그인/익명): user_id로 저장
  */
 export function useProgress(): UseProgressReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { getCurrentUserId, user } = useAuth();
+  const { getCurrentUserId } = useAuth();
 
   /**
    * 진행 기록 저장
@@ -42,29 +41,24 @@ export function useProgress(): UseProgressReturn {
       try {
         const userId = getCurrentUserId();
         if (!userId) {
-          // userId가 없으면 저장할 수 없음 (비로그인 사용자의 경우 session_id가 있어야 함)
+          // userId가 없으면 저장할 수 없음 (익명 인증 실패 등)
           console.warn("사용자 ID가 없어 진행 기록을 저장할 수 없습니다.");
           return;
         }
 
-        const isAuthenticated = !!user;
         const progressData = {
+          user_id: userId,
           case_id: caseId,
           current_question_id: questionId,
           completed_questions: completedQuestions,
           last_updated_at: new Date().toISOString(),
-          ...(isAuthenticated
-            ? { user_id: userId, session_id: null }
-            : { user_id: null, session_id: userId }),
         };
 
         // upsert: 이미 존재하면 업데이트, 없으면 생성
         const { error: upsertError } = await supabase
           .from("user_progress")
           .upsert(progressData, {
-            onConflict: isAuthenticated
-              ? "user_id,case_id"
-              : "session_id,case_id",
+            onConflict: "user_id,case_id",
           });
 
         if (upsertError) {
@@ -82,7 +76,7 @@ export function useProgress(): UseProgressReturn {
         setLoading(false);
       }
     },
-    [getCurrentUserId, user]
+    [getCurrentUserId]
   );
 
   /**
@@ -101,20 +95,12 @@ export function useProgress(): UseProgressReturn {
           return null;
         }
 
-        const isAuthenticated = !!user;
-        const query = supabase
+        const { data, error: fetchError } = await supabase
           .from("user_progress")
           .select("*")
-          .eq("case_id", caseId);
-
-        // 로그인 사용자면 user_id로, 비회원이면 session_id로 조회
-        if (isAuthenticated) {
-          query.eq("user_id", userId).is("session_id", null);
-        } else {
-          query.eq("session_id", userId).is("user_id", null);
-        }
-
-        const { data, error: fetchError } = await query.single();
+          .eq("user_id", userId)
+          .eq("case_id", caseId)
+          .single();
 
         if (fetchError) {
           // 데이터가 없으면 null 반환 (에러 아님)
@@ -146,7 +132,7 @@ export function useProgress(): UseProgressReturn {
         setLoading(false);
       }
     },
-    [getCurrentUserId, user]
+    [getCurrentUserId]
   );
 
   /**
@@ -163,19 +149,11 @@ export function useProgress(): UseProgressReturn {
           return;
         }
 
-        const isAuthenticated = !!user;
-        const query = supabase
+        const { error: deleteError } = await supabase
           .from("user_progress")
           .delete()
+          .eq("user_id", userId)
           .eq("case_id", caseId);
-
-        if (isAuthenticated) {
-          query.eq("user_id", userId).is("session_id", null);
-        } else {
-          query.eq("session_id", userId).is("user_id", null);
-        }
-
-        const { error: deleteError } = await query;
 
         if (deleteError) {
           throw deleteError;
@@ -188,7 +166,7 @@ export function useProgress(): UseProgressReturn {
         setLoading(false);
       }
     },
-    [getCurrentUserId, user]
+    [getCurrentUserId]
   );
 
   /**
@@ -200,32 +178,23 @@ export function useProgress(): UseProgressReturn {
     setLoading(true);
     setError(null);
 
-    try {
-      const userId = getCurrentUserId();
-      if (!userId) {
-        // 사용자 ID가 없으면 완료된 케이스 없음
-        return 0;
-      }
+      try {
+        const userId = getCurrentUserId();
+        if (!userId) {
+          // 사용자 ID가 없으면 완료된 케이스 없음
+          return 0;
+        }
 
-      // 모든 케이스 데이터 가져오기
-      const casesData = await getCases();
-      if (!casesData || casesData.cases.length === 0) {
-        return 0;
-      }
+        // 모든 케이스 데이터 가져오기
+        const casesData = await getCases();
+        if (!casesData || casesData.cases.length === 0) {
+          return 0;
+        }
 
-      const isAuthenticated = !!user;
-      const query = supabase
-        .from("user_progress")
-        .select("case_id, completed_questions");
-
-      // 로그인 사용자면 user_id로, 비회원이면 session_id로 조회
-      if (isAuthenticated) {
-        query.eq("user_id", userId).is("session_id", null);
-      } else {
-        query.eq("session_id", userId).is("user_id", null);
-      }
-
-      const { data: allProgress, error: fetchError } = await query;
+        const { data: allProgress, error: fetchError } = await supabase
+          .from("user_progress")
+          .select("case_id, completed_questions")
+          .eq("user_id", userId);
 
       if (fetchError) {
         // 에러가 발생해도 게임은 계속 진행되도록 0 반환
@@ -263,12 +232,12 @@ export function useProgress(): UseProgressReturn {
       return lastCompletedCaseId;
     } catch (err: unknown) {
       // 예상치 못한 에러인 경우 로그만 남기고 0 반환
-      console.error("완료된 케이스 조회 중 예상치 못한 오류:", err);
-      return 0;
-    } finally {
-      setLoading(false);
-    }
-  }, [getCurrentUserId, user]);
+        console.error("완료된 케이스 조회 중 예상치 못한 오류:", err);
+        return 0;
+      } finally {
+        setLoading(false);
+      }
+    }, [getCurrentUserId]);
 
   return {
     saveProgress,

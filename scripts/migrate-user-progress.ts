@@ -71,17 +71,16 @@ const migrationSQL = `
 CREATE TABLE IF NOT EXISTS user_progress (
   id BIGSERIAL PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  session_id TEXT, -- 비회원 사용자용 (localStorage에서 생성)
+  session_id TEXT, -- 하위 호환성을 위해 유지 (더 이상 사용하지 않음)
   case_id BIGINT NOT NULL REFERENCES detective_puzzle_cases(id) ON DELETE CASCADE,
   current_question_id INTEGER NOT NULL DEFAULT 1,
   completed_questions JSONB DEFAULT '[]'::jsonb, -- 완료한 질문 ID 배열
   last_updated_at TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id, case_id), -- 로그인 사용자: user_id + case_id
-  UNIQUE(session_id, case_id), -- 비회원: session_id + case_id
+  UNIQUE(user_id, case_id), -- 모든 사용자(익명 포함): user_id + case_id
+  UNIQUE(session_id, case_id), -- 하위 호환성을 위해 유지
   CHECK (
-    (user_id IS NOT NULL AND session_id IS NULL) OR
-    (user_id IS NULL AND session_id IS NOT NULL)
+    user_id IS NOT NULL
   )
 );
 
@@ -101,7 +100,8 @@ DROP POLICY IF EXISTS "Anonymous users can view own session progress" ON user_pr
 DROP POLICY IF EXISTS "Anonymous users can insert own session progress" ON user_progress;
 DROP POLICY IF EXISTS "Anonymous users can update own session progress" ON user_progress;
 
--- 로그인 사용자: 본인 데이터만 읽기/쓰기
+-- 모든 사용자(로그인/익명): 본인 데이터만 읽기/쓰기
+-- 익명 인증 사용 시 auth.uid()가 익명 사용자의 UUID를 반환하므로 동일한 정책으로 처리
 CREATE POLICY "Users can view own progress"
 ON user_progress FOR SELECT
 USING (auth.uid() = user_id);
@@ -113,19 +113,6 @@ WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own progress"
 ON user_progress FOR UPDATE
 USING (auth.uid() = user_id);
-
--- 비회원: session_id로 읽기/쓰기 (anon 키로 접근 가능)
-CREATE POLICY "Anonymous users can view own session progress"
-ON user_progress FOR SELECT
-USING (session_id IS NOT NULL);
-
-CREATE POLICY "Anonymous users can insert own session progress"
-ON user_progress FOR INSERT
-WITH CHECK (session_id IS NOT NULL AND user_id IS NULL);
-
-CREATE POLICY "Anonymous users can update own session progress"
-ON user_progress FOR UPDATE
-USING (session_id IS NOT NULL AND user_id IS NULL);
 `;
 
 async function migrateUserProgress() {
