@@ -6,6 +6,12 @@ import { CasesData } from "@/utils/types";
 import { preloadImage, preloadImages } from "@/utils/imagePreloader";
 import { useProgress } from "@/hooks/useProgress";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCoins } from "@/hooks/useCoins";
+import { getUnlockedCases, unlockCase } from "@/utils/coins";
+import CoinChargeModal from "./CoinChargeModal";
+import CoinConfirmModal from "./CoinConfirmModal";
+import AuthModal from "./AuthModal";
+import AlertModal from "./AlertModal";
 import styles from "@/styles/components.module.css";
 
 interface CaseListModalProps {
@@ -23,8 +29,16 @@ export default function CaseListModal({
   const [loading, setLoading] = useState(false);
   const [lastCompletedCaseId, setLastCompletedCaseId] = useState<number>(0);
   const [lastAccessibleCaseId, setLastAccessibleCaseId] = useState<number>(0);
+  const [unlockedCaseIds, setUnlockedCaseIds] = useState<number[]>([]);
+  const [selectedCaseId, setSelectedCaseId] = useState<number | null>(null);
+  const [showCoinModal, setShowCoinModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showCoinConfirmModal, setShowCoinConfirmModal] = useState(false);
+  const [showLoginAlertModal, setShowLoginAlertModal] = useState(false);
+  const [showCoinAlertModal, setShowCoinAlertModal] = useState(false);
   const { getLastCompletedCaseId, getLastAccessibleCaseId } = useProgress();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, getCurrentUserId, isAnonymousUser } = useAuth();
+  const { balance, refreshBalance } = useCoins();
   // 최신 user와 authLoading 값을 추적하기 위한 ref
   const userRef = useRef(user);
   const authLoadingRef = useRef(authLoading);
@@ -96,11 +110,16 @@ export default function CaseListModal({
             // 별도로 저장 (getCaseLockStatus에서 구분하여 사용)
             setLastCompletedCaseId(lastCompleted);
             setLastAccessibleCaseId(lastAccessible);
+
+            // 코인으로 구매한 케이스 조회
+            const unlocked = await getUnlockedCases(currentUser.id);
+            setUnlockedCaseIds(unlocked);
           } else {
             // 사용자가 없으면 완료된 케이스 없음
             console.log("[CaseListModal] 사용자 없음 → 0 설정");
             setLastCompletedCaseId(0);
             setLastAccessibleCaseId(0);
+            setUnlockedCaseIds([]);
           }
         } catch (error) {
           console.error("케이스 로드 실패:", error);
@@ -116,16 +135,35 @@ export default function CaseListModal({
 
   if (!isOpen) return null;
 
-  const handleCaseClick = (caseId: number, isLocked: boolean) => {
-    // 잠긴 케이스는 클릭 불가
+  const handleCaseClick = async (caseId: number, isLocked: boolean) => {
+    const userId = getCurrentUserId();
+    const requiredCoins = 5;
+
+    // 잠긴 케이스인 경우 코인 구매 플로우
     if (isLocked) {
+      // A. 비로그인 또는 익명 사용자 → 안내 모달 표시 후 로그인 모달
+      if (!userId || !user || isAnonymousUser) {
+        setShowLoginAlertModal(true);
+        return;
+      }
+
+      // B. 로그인 + 코인 부족 → 안내 모달 표시 후 코인 충전 모달
+      if (balance < requiredCoins) {
+        setSelectedCaseId(caseId);
+        setShowCoinAlertModal(true);
+        return;
+      }
+
+      // C. 로그인 + 코인 충분 → 확인 모달 표시
+      setSelectedCaseId(caseId);
+      setShowCoinConfirmModal(true);
       return;
     }
 
-    // cases state에서 찾아서 preload (네트워크 요청 없음)
+    // 잠금 해제된 케이스는 바로 선택
     const caseData = cases.cases.find((c) => c.id === caseId);
     if (caseData) {
-      preloadImage(caseData.image); // 확실히 preload (이미 했을 수도 있지만 안전하게)
+      preloadImage(caseData.image);
     }
     onCaseSelect(caseId);
   };
@@ -136,7 +174,13 @@ export default function CaseListModal({
   // - 진행 중인 케이스 N이면: 케이스 N까지만 열림 (N+1은 잠김)
   // - 둘 다 있으면: 각각 계산한 값 중 더 큰 값 사용
   // - 둘 다 없으면: 케이스 1만 열림
+  // - 코인으로 구매한 케이스는 항상 열림
   const getCaseLockStatus = (caseId: number) => {
+    // 코인으로 구매한 케이스는 항상 열림
+    if (unlockedCaseIds.includes(caseId)) {
+      return { isLocked: false, isCurrent: false };
+    }
+
     // 완료된 케이스 기준으로 열 수 있는 최대 케이스
     const completedThreshold = lastCompletedCaseId > 0 ? lastCompletedCaseId + 1 : 0;
     // 진행 중인 케이스 기준으로 열 수 있는 최대 케이스
@@ -192,9 +236,8 @@ export default function CaseListModal({
                 <button
                   key={case_.id}
                   onClick={() => handleCaseClick(case_.id, isLocked)}
-                  onMouseEnter={() => !isLocked && handleCaseHover(case_.id)}
+                  onMouseEnter={() => handleCaseHover(case_.id)}
                   className={className}
-                  disabled={isLocked}
                 >
                   <span>
                     {case_.id}. {displayTitle}
@@ -232,6 +275,76 @@ export default function CaseListModal({
           닫기
         </button>
       </div>
+      <CoinChargeModal
+        isOpen={showCoinModal}
+        onClose={() => {
+          setShowCoinModal(false);
+          setSelectedCaseId(null);
+        }}
+      />
+      <AlertModal
+        isOpen={showLoginAlertModal}
+        onClose={() => setShowLoginAlertModal(false)}
+        onConfirm={() => {
+          setShowLoginAlertModal(false);
+          setShowAuthModal(true);
+        }}
+        title="로그인 필요"
+        message="코인이 부족합니다. 코인 충전을 위해 로그인 해주세요."
+        icon="🪙"
+      />
+      <AlertModal
+        isOpen={showCoinAlertModal}
+        onClose={() => {
+          setShowCoinAlertModal(false);
+          setSelectedCaseId(null);
+        }}
+        onConfirm={() => {
+          setShowCoinAlertModal(false);
+          setShowCoinModal(true);
+        }}
+        title="코인 부족"
+        message="케이스를 보려면 5코인이 필요합니다. 코인을 충전해주세요."
+        icon="🪙"
+      />
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => {
+          setShowAuthModal(false);
+          setSelectedCaseId(null);
+        }}
+      />
+      <CoinConfirmModal
+        isOpen={showCoinConfirmModal}
+        onClose={() => {
+          setShowCoinConfirmModal(false);
+          setSelectedCaseId(null);
+        }}
+        onConfirm={async () => {
+          if (!selectedCaseId) return;
+          const userId = getCurrentUserId();
+          if (!userId) return;
+
+          const result = await unlockCase(userId, selectedCaseId);
+          if (result.success) {
+            // 코인 잔액 새로고침
+            await refreshBalance();
+            // 구매한 케이스 목록 업데이트
+            const unlocked = await getUnlockedCases(userId);
+            setUnlockedCaseIds(unlocked);
+            // 케이스 선택
+            const caseData = cases.cases.find((c) => c.id === selectedCaseId);
+            if (caseData) {
+              preloadImage(caseData.image);
+            }
+            onCaseSelect(selectedCaseId);
+          } else {
+            alert(result.error || "케이스 잠금 해제에 실패했습니다.");
+          }
+        }}
+        purpose="case_unlock"
+        requiredCoins={5}
+      />
     </div>
   );
 }

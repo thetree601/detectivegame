@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { useCaseData } from "@/hooks/useCaseData";
 import { useAuth } from "@/contexts/AuthContext";
+import CoinChargeModal from "./CoinChargeModal";
+import { useCoins } from "@/hooks/useCoins";
 import { preloadImage } from "@/utils/imagePreloader";
 import styles from "@/styles/components.module.css";
 
@@ -21,6 +24,8 @@ export default function StartScreen({
 }: StartScreenProps) {
   const { caseData } = useCaseData({ caseId });
   const { signOut, isAnonymousUser } = useAuth();
+  const { balance } = useCoins();
+  const [showCoinModal, setShowCoinModal] = useState(false);
 
   // 게임 시작 버튼 hover 시 이미지 확실히 preload
   const handleStartButtonHover = () => {
@@ -49,6 +54,23 @@ export default function StartScreen({
 
   return (
     <div className={styles.startScreen}>
+      {/* 코인 잔액 및 충전 버튼 - 현재는 모든 사용자에게 숨김 처리 */}
+      {/* Phase 3에서 코인 사용 기능 추가 시 필요 시점에만 표시하도록 확장 가능 */}
+      {false && !isAnonymousUser && (
+        <div className={styles.startScreenCoinBalance}>
+          <span className={styles.startScreenCoinBalanceIcon}>🪙</span>
+          <span className={styles.startScreenCoinBalanceAmount}>
+            {balance}코인
+          </span>
+          <button
+            onClick={() => setShowCoinModal(true)}
+            className={styles.coinChargeButton}
+            aria-label="코인 충전"
+          >
+            충전
+          </button>
+        </div>
+      )}
       <div className={styles.startScreenTopButtons}>
         {onOpenCaseList && (
           <button
@@ -93,6 +115,10 @@ export default function StartScreen({
           </button>
         </div>
       </div>
+      <CoinChargeModal
+        isOpen={showCoinModal}
+        onClose={() => setShowCoinModal(false)}
+      />
     </div>
   );
 }

@@ -8,6 +8,75 @@
   background: #f3f4f6;
 }
 
+/* 코인 잔액 스타일 (Phase 2, 3에서 재사용) */
+.coinBalance {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(37, 99, 235, 0.9);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.coinBalanceIcon {
+  font-size: 1rem;
+}
+
+.coinBalanceAmount {
+  font-size: 1rem;
+}
+
+.coinChargeButton {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 0.25rem;
+}
+
+.coinChargeButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.coinChargeButton:active {
+  transform: scale(0.95);
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .coinBalance {
+    top: 1.5rem;
+    left: 1.5rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .coinBalanceAmount {
+    font-size: 1.125rem;
+  }
+
+  .coinChargeButton {
+    padding: 0.375rem 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
 .imageContainer {
   flex: 1;
   position: relative;
@@ -321,6 +390,34 @@
   flex-wrap: wrap;
 }
 
+/* 코인 잔액 스타일 (Phase 2, 3에서 재사용) */
+.startScreenCoinBalance {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(37, 99, 235, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.startScreenCoinBalanceIcon {
+  font-size: 1rem;
+}
+
+.startScreenCoinBalanceAmount {
+  font-size: 1rem;
+}
+
 .caseListButton {
   background: rgba(37, 99, 235, 0.2);
   backdrop-filter: blur(10px);
@@ -387,6 +484,18 @@
   .startScreenTopButtons {
     top: 1.5rem;
     right: 1.5rem;
+  }
+
+  /* 코인 잔액 반응형 스타일 (Phase 2, 3에서 재사용) */
+  .startScreenCoinBalance {
+    top: 1.5rem;
+    left: 1.5rem;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .startScreenCoinBalanceAmount {
+    font-size: 1.125rem;
   }
 
   .caseListButton {
