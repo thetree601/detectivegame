@@ -133,14 +133,19 @@ async function isPaymentAlreadyProcessed(
 
 export async function POST(request: NextRequest) {
   try {
-    // 개발 환경에서 환경 변수 상태 로그 출력
+    // 환경 변수 상태 로그 출력 (프로덕션 포함)
     const isDevelopment = process.env.NODE_ENV !== "production";
-    if (isDevelopment) {
-      const hasSecret = !!process.env.PORTONE_V2_API_SECRET;
-      console.log("🔍 포트원 환경 변수 상태:");
-      console.log("   PORTONE_V2_API_SECRET:", hasSecret ? "✅ 설정됨" : "❌ 없음");
-      if (!hasSecret) {
+    const hasSecret = !!process.env.PORTONE_V2_API_SECRET;
+    
+    console.log("🔍 포트원 환경 변수 상태:");
+    console.log("   PORTONE_V2_API_SECRET:", hasSecret ? "✅ 설정됨" : "❌ 없음");
+    console.log("   환경:", isDevelopment ? "개발" : "프로덕션");
+    
+    if (!hasSecret) {
+      if (isDevelopment) {
         console.log("   💡 .env.local 파일에 PORTONE_V2_API_SECRET을 추가해주세요.");
+      } else {
+        console.log("   💡 Vercel 환경 변수 설정에서 PORTONE_V2_API_SECRET을 확인해주세요.");
       }
     }
 
@@ -152,7 +157,20 @@ export async function POST(request: NextRequest) {
       const errorMessage = envError instanceof Error ? envError.message : "포트원 클라이언트 초기화 실패";
       console.error("포트원 클라이언트 초기화 실패:", errorMessage);
       
-      // 개발 환경에서는 상세한 에러 메시지, 프로덕션에서는 일반적인 메시지
+      // 프로덕션에서도 환경 변수 관련 에러는 명확한 메시지 반환
+      if (errorMessage.includes("PORTONE_V2_API_SECRET")) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: isDevelopment
+              ? errorMessage
+              : "포트원 서버 설정 오류입니다. 환경 변수가 올바르게 설정되었는지 확인해주세요.",
+          },
+          { status: 500 }
+        );
+      }
+      
+      // 기타 초기화 오류
       return NextResponse.json(
         {
           success: false,
@@ -196,7 +214,27 @@ export async function POST(request: NextRequest) {
     try {
       payment = await portone.payment.getPayment({ paymentId });
     } catch (e: unknown) {
-      console.error("포트원 결제 조회 실패:", e);
+      // 상세 에러 정보 로깅
+      console.error("포트원 결제 조회 실패:");
+      console.error("   paymentId:", paymentId);
+      
+      if (e instanceof Error) {
+        console.error("   에러 타입:", e.constructor.name);
+        console.error("   에러 메시지:", e.message);
+        console.error("   스택:", e.stack);
+        
+        // 포트원 인증 관련 에러인지 확인
+        if (e.message.includes("401") || e.message.includes("Unauthorized") || e.message.includes("인증")) {
+          console.error("   ⚠️ 포트원 인증 오류 가능성: 시크릿 키를 확인해주세요.");
+          return NextResponse.json(
+            { success: false, error: "포트원 인증 오류가 발생했습니다. 시크릿 키를 확인해주세요." },
+            { status: 401 }
+          );
+        }
+      } else {
+        console.error("   알 수 없는 에러:", e);
+      }
+      
       return NextResponse.json(
         { success: false, error: "결제 정보를 조회할 수 없습니다." },
         { status: 400 }
@@ -261,9 +299,23 @@ export async function POST(request: NextRequest) {
   } catch (err: unknown) {
     const errorMessage =
       err instanceof Error ? err.message : "예상치 못한 오류가 발생했습니다.";
-    console.error("결제 완료 처리 중 오류:", err);
+    
+    // 상세 에러 로깅
+    console.error("결제 완료 처리 중 오류:");
+    console.error("   에러:", err);
+    if (err instanceof Error) {
+      console.error("   메시지:", err.message);
+      console.error("   스택:", err.stack);
+    }
+    
+    // 프로덕션에서도 에러 타입에 따라 명확한 메시지 반환
+    const isDevelopment = process.env.NODE_ENV !== "production";
+    const userMessage = isDevelopment
+      ? errorMessage
+      : "결제 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+    
     return NextResponse.json(
-      { success: false, error: errorMessage },
+      { success: false, error: userMessage },
       { status: 500 }
     );
   }

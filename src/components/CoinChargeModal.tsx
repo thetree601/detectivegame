@@ -97,9 +97,18 @@ export default function CoinChargeModal({
         if (isJson) {
           try {
             const errorData = await completeResponse.json();
-            throw new Error(errorData.error || "코인 충전에 실패했습니다.");
-          } catch {
+            
+            // 서버 에러 응답 상세 정보 로깅
+            console.error("서버 에러 응답:");
+            console.error("   상태 코드:", completeResponse.status);
+            console.error("   에러 데이터:", errorData);
+            
+            // 서버에서 반환한 error 필드를 우선적으로 사용
+            const errorMessage = errorData.error || "코인 충전에 실패했습니다.";
+            throw new Error(errorMessage);
+          } catch (parseError) {
             // JSON 파싱 실패 시 기본 에러 메시지 사용
+            console.error("JSON 파싱 실패:", parseError);
             throw new Error(
               `서버 오류가 발생했습니다. (${completeResponse.status})`
             );
@@ -107,7 +116,9 @@ export default function CoinChargeModal({
         } else {
           // HTML 또는 다른 형식의 응답인 경우
           const text = await completeResponse.text();
-          console.error("서버 응답 (비-JSON):", text.substring(0, 200));
+          console.error("서버 응답 (비-JSON):");
+          console.error("   상태 코드:", completeResponse.status);
+          console.error("   응답 내용:", text.substring(0, 200));
           throw new Error(
             `서버 오류가 발생했습니다. (${completeResponse.status})`
           );
@@ -130,8 +141,16 @@ export default function CoinChargeModal({
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "예상치 못한 오류가 발생했습니다.";
+      
+      // 상세 에러 로깅
+      console.error("코인 충전 중 오류:");
+      console.error("   에러:", err);
+      if (err instanceof Error) {
+        console.error("   메시지:", err.message);
+        console.error("   스택:", err.stack);
+      }
+      
       setError(errorMessage);
-      console.error("코인 충전 중 오류:", err);
     } finally {
       setLoading(null);
     }

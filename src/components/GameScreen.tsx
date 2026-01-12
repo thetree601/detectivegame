@@ -5,7 +5,6 @@ import ImageViewer from "./ImageViewer";
 import QuestionPanel from "./QuestionPanel";
 import FeedbackModal from "./FeedbackModal";
 import CoinChargeModal from "./CoinChargeModal";
-import CoinConfirmModal from "./CoinConfirmModal";
 import AuthModal from "./AuthModal";
 import AlertModal from "./AlertModal";
 import { useGameState } from "@/hooks/useGameState";
@@ -46,8 +45,8 @@ export default function GameScreen({
   const { balance, spendCoins } = useCoins();
   const [showCoinModal, setShowCoinModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showCoinConfirmModal, setShowCoinConfirmModal] = useState(false);
-  const [showLoginAlertModal, setShowLoginAlertModal] = useState(false);
+  const [showAnswerAlertModal, setShowAnswerAlertModal] = useState(false);
+  const [answerAlertType, setAnswerAlertType] = useState<"login" | "coin_insufficient" | "coin_sufficient" | null>(null);
 
   const getNextImageSrc = () => {
     if (!caseData || !currentQuestion) return undefined;
@@ -100,18 +99,21 @@ export default function GameScreen({
 
     // A. 비로그인 또는 익명 사용자 → 안내 모달 표시 후 로그인 모달
     if (!userId || !user || isAnonymousUser) {
-      setShowLoginAlertModal(true);
+      setAnswerAlertType("login");
+      setShowAnswerAlertModal(true);
       return;
     }
 
-    // B. 로그인 + 코인 부족 → 코인 충전 모달 표시
+    // B. 로그인 + 코인 부족 → 안내 모달 표시 후 코인 충전 모달
     if (balance < requiredCoins) {
-      setShowCoinModal(true);
+      setAnswerAlertType("coin_insufficient");
+      setShowAnswerAlertModal(true);
       return;
     }
 
-    // C. 로그인 + 코인 충분 → 확인 모달 표시
-    setShowCoinConfirmModal(true);
+    // C. 로그인 + 코인 충분 → 안내 모달 표시 후 코인 차감 및 정답 노출
+    setAnswerAlertType("coin_sufficient");
+    setShowAnswerAlertModal(true);
   };
 
   const handleConfirmAnswerReveal = async () => {
@@ -123,6 +125,35 @@ export default function GameScreen({
       handleShowAnswer();
     } else {
       alert(result.error || "코인 차감에 실패했습니다.");
+    }
+  };
+
+  const getAnswerAlertMessage = () => {
+    switch (answerAlertType) {
+      case "login":
+        return "정답 보기는 3코인이 필요합니다. 코인 충전을 위해 로그인을 해주세요.";
+      case "coin_insufficient":
+        return "정답 보기는 3코인이 필요합니다. 코인을 충전해주세요.";
+      case "coin_sufficient":
+        return "정답 보기는 3코인이 필요합니다. 구매하시겠습니까?";
+      default:
+        return "";
+    }
+  };
+
+  const handleAnswerAlertConfirm = () => {
+    setShowAnswerAlertModal(false);
+    
+    switch (answerAlertType) {
+      case "login":
+        setShowAuthModal(true);
+        break;
+      case "coin_insufficient":
+        setShowCoinModal(true);
+        break;
+      case "coin_sufficient":
+        handleConfirmAnswerReveal();
+        break;
     }
   };
 
@@ -172,26 +203,19 @@ export default function GameScreen({
         onClose={() => setShowCoinModal(false)}
       />
       <AlertModal
-        isOpen={showLoginAlertModal}
-        onClose={() => setShowLoginAlertModal(false)}
-        onConfirm={() => {
-          setShowLoginAlertModal(false);
-          setShowAuthModal(true);
+        isOpen={showAnswerAlertModal}
+        onClose={() => {
+          setShowAnswerAlertModal(false);
+          setAnswerAlertType(null);
         }}
-        title="로그인 필요"
-        message="코인이 부족합니다. 코인 충전을 위해 로그인 해주세요."
+        onConfirm={handleAnswerAlertConfirm}
+        title="알림"
+        message={getAnswerAlertMessage()}
         icon="🪙"
       />
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-      />
-      <CoinConfirmModal
-        isOpen={showCoinConfirmModal}
-        onClose={() => setShowCoinConfirmModal(false)}
-        onConfirm={handleConfirmAnswerReveal}
-        purpose="answer_reveal"
-        requiredCoins={3}
       />
     </div>
   );
