@@ -291,9 +291,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+// 💡 충전 후의 실제 잔액을 한 번 더 조회해서 보내줍니다.
+    const { data: userData } = await supabase
+      .from("user_coins") // ⚠️ 실제 테이블명이 'user_coins'인지 확인하세요
+      .select("balance")
+      .eq("user_id", userId)
+      .single();
+
     return NextResponse.json({
       success: true,
-      coins: product.totalCoins,
+      coins: userData?.balance || product.totalCoins, // 최종 잔액 전달
       message: `${product.totalCoins}코인이 충전되었습니다.`,
     });
   } catch (err: unknown) {
