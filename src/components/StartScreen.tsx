@@ -80,8 +80,8 @@ export default function StartScreen({
           className={styles.profileIconButton}
           style={{
             position: "absolute",
-            top: "2rem",
-            left: "2rem",
+            top: "1rem",
+            left: "1rem",
             zIndex: 10,
           }}
           aria-label="마이페이지"

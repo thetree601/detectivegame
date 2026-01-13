@@ -233,8 +233,8 @@ export default function GameScreen({
           className={styles.profileIconButton}
           style={{
             position: "absolute",
-            bottom: "2rem",
-            right: "2rem",
+            bottom: "0.5rem",
+            right: "0.5rem",
             zIndex: 10,
           }}
           aria-label="마이페이지"
