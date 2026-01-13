@@ -62,8 +62,10 @@ export default function CoinChargeModal({
         totalAmount: product.price,
         currency: "KRW",
         payMethod: "CARD",
+        redirectUrl: `${window.location.origin}/payment-result`,
         customData: {
           productId: product.id,
+          userId: userId, // 리디렉션 대비 유저 ID도 함께 저장
         },
       });
 
