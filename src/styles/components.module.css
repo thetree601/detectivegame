@@ -868,3 +868,240 @@
     font-size: 1.125rem;
   }
 }
+
+/* ============================================
+   프로필 아이콘 버튼
+   ============================================ */
+.profileIconButton {
+  background: rgba(37, 99, 235, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 0.75rem;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.profileIconButton:hover {
+  background: rgba(37, 99, 235, 0.3);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.4);
+}
+
+.profileIconButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .profileIconButton {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.5rem;
+    padding: 0.875rem;
+  }
+}
+
+/* ============================================
+   마이페이지 모달
+   ============================================ */
+.myPageModal {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 32rem;
+  width: 100%;
+  margin: 0 1rem;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.myPageContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.myPageBalance {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 2px solid #2563eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.myPageBalanceLabel {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.myPageBalanceAmount {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.myPageBalanceAmount .coinBalanceIcon {
+  font-size: 1.75rem;
+}
+
+.transactionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.transactionSectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.transactionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.transactionList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.transactionList::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.transactionList::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.transactionList::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.transactionItem {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.transactionTypeCharge {
+  border-left: 3px solid #16a34a;
+}
+
+.transactionTypeSpend {
+  border-left: 3px solid #dc2626;
+}
+
+.transactionItemMain {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.transactionItemType {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.transactionItemAmount {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.transactionTypeCharge .transactionItemAmount {
+  color: #16a34a;
+}
+
+.transactionTypeSpend .transactionItemAmount {
+  color: #dc2626;
+}
+
+.transactionItemDate {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.transactionLoading {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.transactionEmpty {
+  text-align: center;
+  padding: 2rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px dashed #e5e7eb;
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+  .myPageModal {
+    padding: 2rem;
+  }
+
+  .myPageBalance {
+    padding: 2rem;
+  }
+
+  .myPageBalanceAmount {
+    font-size: 2.5rem;
+  }
+
+  .myPageBalanceAmount .coinBalanceIcon {
+    font-size: 2rem;
+  }
+
+  .transactionSectionTitle {
+    font-size: 1.125rem;
+  }
+
+  .transactionItem {
+    padding: 1rem 1.25rem;
+  }
+
+  .transactionItemType {
+    font-size: 1rem;
+  }
+
+  .transactionItemAmount {
+    font-size: 1.125rem;
+  }
+}

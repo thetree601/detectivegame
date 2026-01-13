@@ -342,6 +342,10 @@ export default function CaseListModal({
             alert(result.error || "케이스 잠금 해제에 실패했습니다.");
           }
         }}
+        onInsufficientCoins={() => {
+          setShowCoinConfirmModal(false);
+          setShowCoinModal(true);
+        }}
         purpose="case_unlock"
         requiredCoins={5}
       />

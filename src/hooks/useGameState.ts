@@ -48,16 +48,24 @@ export function useGameState({
           // 진행 기록 불러오기
           const progress = await loadProgress(caseId);
           if (progress) {
-            // 저장된 진행 기록이 있으면 해당 질문부터 시작
-            const savedQuestionId = progress.current_question_id;
             const savedCompleted = progress.completed_questions || [];
+            const totalQuestions = case_.questions.length;
+            
+            // 케이스 완료 여부 확인: 모든 질문이 완료되었는지 확인
+            const isCaseCompleted = 
+              savedCompleted.length === totalQuestions && totalQuestions > 0;
+            
+            // 완료된 케이스는 첫 번째 질문부터 시작, 진행 중인 케이스는 저장된 질문부터 시작
+            const startQuestionId = isCaseCompleted 
+              ? initialQuestionId 
+              : progress.current_question_id;
 
-            setCurrentQuestionId(savedQuestionId);
+            setCurrentQuestionId(startQuestionId);
             setCompletedQuestions(savedCompleted);
 
             const question = await getQuestionByCaseAndQuestionId(
               caseId,
-              savedQuestionId
+              startQuestionId
             );
             setCurrentQuestion(question || null);
           } else {

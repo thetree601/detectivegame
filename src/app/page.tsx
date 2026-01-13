@@ -5,6 +5,7 @@ import StartScreen from "@/components/StartScreen";
 import GameScreen from "@/components/GameScreen";
 import CaseListModal from "@/components/CaseListModal";
 import AuthModal from "@/components/AuthModal";
+import MyPageModal from "@/components/MyPageModal";
 import { getCases } from "@/utils/caseLoader";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -15,6 +16,7 @@ export default function Home() {
   const [currentCaseId, setCurrentCaseId] = useState(1);
   const [showCaseListModal, setShowCaseListModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showMyPageModal, setShowMyPageModal] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const { loading: authLoading } = useAuth();
 
@@ -86,6 +88,10 @@ export default function Home() {
     setGameStarted(false);
   };
 
+  const handleOpenMyPage = () => {
+    setShowMyPageModal(true);
+  };
+
   // 초기화 중이면 로딩 표시
   if (isInitializing || authLoading) {
     return <div>로딩 중...</div>;
@@ -99,6 +105,7 @@ export default function Home() {
           onStartGame={() => setGameStarted(true)}
           onOpenCaseList={handleOpenCaseList}
           onOpenAuth={() => setShowAuthModal(true)}
+          onOpenMyPage={handleOpenMyPage}
         />
         <CaseListModal
           isOpen={showCaseListModal}
@@ -108,6 +115,10 @@ export default function Home() {
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
+        />
+        <MyPageModal
+          isOpen={showMyPageModal}
+          onClose={() => setShowMyPageModal(false)}
         />
       </>
     );
@@ -120,11 +131,16 @@ export default function Home() {
         onCaseComplete={handleCaseComplete}
         onOpenCaseList={handleOpenCaseList}
         onGoToMain={handleGoToMain}
+        onOpenMyPage={handleOpenMyPage}
       />
       <CaseListModal
         isOpen={showCaseListModal}
         onClose={() => setShowCaseListModal(false)}
         onCaseSelect={handleCaseSelect}
+      />
+      <MyPageModal
+        isOpen={showMyPageModal}
+        onClose={() => setShowMyPageModal(false)}
       />
     </>
   );

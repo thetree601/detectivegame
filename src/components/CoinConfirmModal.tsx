@@ -9,6 +9,7 @@ interface CoinConfirmModalProps {
   onConfirm: () => Promise<void>;
   purpose: "answer_reveal" | "case_unlock";
   requiredCoins: number;
+  onInsufficientCoins?: () => void;
 }
 
 export default function CoinConfirmModal({
@@ -17,6 +18,7 @@ export default function CoinConfirmModal({
   onConfirm,
   purpose,
   requiredCoins,
+  onInsufficientCoins,
 }: CoinConfirmModalProps) {
   const { balance } = useCoins();
   const hasEnoughCoins = balance >= requiredCoins;
@@ -32,6 +34,11 @@ export default function CoinConfirmModal({
   };
 
   const handleConfirm = async () => {
+    if (!hasEnoughCoins && onInsufficientCoins) {
+      onInsufficientCoins();
+      onClose();
+      return;
+    }
     await onConfirm();
     onClose();
   };
@@ -112,7 +119,6 @@ export default function CoinConfirmModal({
           <button
             onClick={handleConfirm}
             className={styles.primaryButton}
-            disabled={!hasEnoughCoins}
           >
             확인
           </button>

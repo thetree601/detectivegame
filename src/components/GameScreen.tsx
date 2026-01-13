@@ -10,6 +10,7 @@ import AlertModal from "./AlertModal";
 import { useGameState } from "@/hooks/useGameState";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCoins } from "@/hooks/useCoins";
+import { getPurchasedAnswers, getQuestionDbId, checkAnswerPurchased } from "@/utils/coins";
 import styles from "@/styles/components.module.css";
 
 interface GameScreenProps {
@@ -18,6 +19,7 @@ interface GameScreenProps {
   onCaseComplete?: () => void;
   onOpenCaseList?: () => void;
   onGoToMain?: () => void;
+  onOpenMyPage?: () => void;
 }
 
 export default function GameScreen({
@@ -26,6 +28,7 @@ export default function GameScreen({
   onCaseComplete,
   onOpenCaseList,
   onGoToMain,
+  onOpenMyPage,
 }: GameScreenProps) {
   const {
     currentQuestionId,
@@ -97,21 +100,78 @@ export default function GameScreen({
     const userId = getCurrentUserId();
     const requiredCoins = 3;
 
+    console.log("[handleShowAnswerClick] 시작:", { userId, caseId, currentQuestionId, balance });
+
     // A. 비로그인 또는 익명 사용자 → 안내 모달 표시 후 로그인 모달
     if (!userId || !user || isAnonymousUser) {
+      console.log("[handleShowAnswerClick] 비로그인 사용자");
       setAnswerAlertType("login");
       setShowAnswerAlertModal(true);
       return;
     }
 
+    // 이미 구매한 정답인지 확인
+    if (currentQuestionId) {
+      console.log("[handleShowAnswerClick] 구매 기록 확인 시작:", { caseId, currentQuestionId, type: typeof currentQuestionId });
+      
+      // 방법 1: getPurchasedAnswers로 확인
+      const purchasedAnswers = await getPurchasedAnswers(userId, caseId);
+      console.log("[handleShowAnswerClick] 구매 기록 확인 결과:", { 
+        purchasedAnswers, 
+        currentQuestionId, 
+        includes: purchasedAnswers.includes(currentQuestionId),
+        purchasedAnswersTypes: purchasedAnswers.map(a => typeof a),
+        currentQuestionIdType: typeof currentQuestionId
+      });
+      
+      // 타입 안전성을 위해 명시적으로 숫자로 변환하여 비교
+      const currentQuestionIdNum = Number(currentQuestionId);
+      const purchasedAnswersNums = purchasedAnswers.map(a => Number(a));
+      let isPurchased = purchasedAnswersNums.includes(currentQuestionIdNum);
+      
+      console.log("[handleShowAnswerClick] 타입 변환 후 비교:", {
+        currentQuestionId,
+        currentQuestionIdNum,
+        purchasedAnswers,
+        purchasedAnswersNums,
+        isPurchased
+      });
+      
+      // 방법 2: fallback - 질문 DB ID와 질문 번호로 직접 확인
+      if (!isPurchased) {
+        console.log("[handleShowAnswerClick] fallback 확인 시작");
+        const questionDbId = await getQuestionDbId(caseId, currentQuestionId);
+        console.log("[handleShowAnswerClick] 질문 DB ID:", questionDbId);
+        
+        if (questionDbId) {
+          // 질문 DB ID와 질문 번호 모두 전달하여 확인
+          isPurchased = await checkAnswerPurchased(userId, questionDbId, currentQuestionId);
+          console.log("[handleShowAnswerClick] fallback 확인 결과:", isPurchased);
+        }
+      }
+      
+      if (isPurchased) {
+        console.log("[handleShowAnswerClick] 이미 구매한 정답 - 바로 표시");
+        // 이미 구매한 경우 코인 차감 없이 정답 표시
+        handleShowAnswer();
+        return;
+      } else {
+        console.log("[handleShowAnswerClick] 구매하지 않은 정답 - 구매 플로우 진행");
+      }
+    } else {
+      console.log("[handleShowAnswerClick] currentQuestionId가 없음");
+    }
+
     // B. 로그인 + 코인 부족 → 안내 모달 표시 후 코인 충전 모달
     if (balance < requiredCoins) {
+      console.log("[handleShowAnswerClick] 코인 부족:", { balance, requiredCoins });
       setAnswerAlertType("coin_insufficient");
       setShowAnswerAlertModal(true);
       return;
     }
 
     // C. 로그인 + 코인 충분 → 안내 모달 표시 후 코인 차감 및 정답 노출
+    console.log("[handleShowAnswerClick] 코인 충분 - 구매 확인 모달 표시");
     setAnswerAlertType("coin_sufficient");
     setShowAnswerAlertModal(true);
   };
@@ -120,7 +180,14 @@ export default function GameScreen({
     const userId = getCurrentUserId();
     if (!userId || !currentQuestionId) return;
 
-    const result = await spendCoins(3, "answer_reveal", currentQuestionId);
+    // 질문 번호로 질문의 DB ID 조회
+    const questionDbId = await getQuestionDbId(caseId, currentQuestionId);
+    if (!questionDbId) {
+      alert("질문 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    const result = await spendCoins(3, "answer_reveal", questionDbId);
     if (result.success) {
       handleShowAnswer();
     } else {
@@ -159,6 +226,22 @@ export default function GameScreen({
 
   return (
     <div className={styles.gameScreen}>
+      {/* 프로필 아이콘 - 좌측 상단 */}
+      {!isAnonymousUser && onOpenMyPage && (
+        <button
+          onClick={onOpenMyPage}
+          className={styles.profileIconButton}
+          style={{
+            position: "absolute",
+            bottom: "2rem",
+            right: "2rem",
+            zIndex: 10,
+          }}
+          aria-label="마이페이지"
+        >
+          👤
+        </button>
+      )}
       {/* 코인 잔액 및 충전 버튼 - 현재는 모든 사용자에게 숨김 처리 */}
       {/* Phase 3에서 코인 사용 기능 추가 시 필요 시점에만 표시하도록 확장 가능 */}
       {false && !isAnonymousUser && (

@@ -14,6 +14,7 @@ interface StartScreenProps {
   onStartGame: () => void;
   onOpenCaseList?: () => void;
   onOpenAuth?: () => void;
+  onOpenMyPage?: () => void;
 }
 
 export default function StartScreen({
@@ -21,6 +22,7 @@ export default function StartScreen({
   onStartGame,
   onOpenCaseList,
   onOpenAuth,
+  onOpenMyPage,
 }: StartScreenProps) {
   const { caseData } = useCaseData({ caseId });
   const { signOut, isAnonymousUser } = useAuth();
@@ -70,6 +72,22 @@ export default function StartScreen({
             충전
           </button>
         </div>
+      )}
+      {/* 프로필 아이콘 - 좌측 상단 */}
+      {!isAnonymousUser && onOpenMyPage && (
+        <button
+          onClick={onOpenMyPage}
+          className={styles.profileIconButton}
+          style={{
+            position: "absolute",
+            top: "2rem",
+            left: "2rem",
+            zIndex: 10,
+          }}
+          aria-label="마이페이지"
+        >
+          👤
+        </button>
       )}
       <div className={styles.startScreenTopButtons}>
         {onOpenCaseList && (
