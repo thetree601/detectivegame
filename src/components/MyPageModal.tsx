@@ -39,11 +39,13 @@ export default function MyPageModal({ isOpen, onClose }: MyPageModalProps) {
     }
   }, [getCurrentUserId, isAnonymousUser]); // 의존성 추가
 
-  useEffect(() => {
-    if (isOpen) {
-      loadTransactions();
-    }
-  }, [isOpen, loadTransactions]); // 이제 loadTransactions를 여기에 넣어도 안전합니다.
+// MyPageModal.tsx 내부의 useEffect 부분
+useEffect(() => {
+  if (isOpen) {
+    loadTransactions(); // 거래 내역 로드
+    refreshBalance();    // ✨ 잔액도 최신으로 새로고침 (추가)
+  }
+}, [isOpen, loadTransactions, refreshBalance]); // refreshBalance를 의존성에 추가
 
   const handleCoinChargeClose = async () => {
     setShowCoinModal(false);
