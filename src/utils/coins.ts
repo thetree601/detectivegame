@@ -570,105 +570,70 @@ export async function getCoinTransactions(
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("코인 거래 내역 조회 실패:", error);
-      return [];
-    }
+    if (error || !data) return [];
 
-    if (!data || data.length === 0) {
-      return [];
-    }
+    // 1. 필요한 모든 ID 수집 (질문 ID들, 케이스 ID들)
+    const questionIds = data
+      .filter(row => row.purpose === "answer_reveal" && row.related_id)
+      .map(row => Number(row.related_id));
+      
+    const caseUnlockIds = data
+      .filter(row => row.purpose === "case_unlock" && row.related_id)
+      .map(row => Number(row.related_id));
 
-    // answer_reveal 거래 중 related_id가 있는 것들만 필터링
-    const answerRevealTransactions = data.filter(
-      (row) => row.purpose === "answer_reveal" && row.related_id
-    );
-
-    // 케이스/질문 정보 조회 (answer_reveal인 경우만)
-    const questionInfoMap = new Map<
-      number,
-      { caseId: number; caseTitle: string; questionNumber: number }
-    >();
-
-    if (answerRevealTransactions.length > 0) {
-      const questionIds = answerRevealTransactions.map((t) =>
-        Number(t.related_id)
-      );
-
-      // 질문 정보 조회
-      const { data: questions, error: questionsError } = await supabase
+    // 2. 질문 정보 한꺼번에 조회
+    const questionInfoMap = new Map<number, { caseId: number; questionNumber: number }>();
+    if (questionIds.length > 0) {
+      const { data: qs } = await supabase
         .from("detective_puzzle_questions")
         .select("id, case_id, question_number")
         .in("id", questionIds);
-
-      if (questionsError) {
-        console.error("질문 정보 조회 실패:", questionsError);
-      } else if (questions && questions.length > 0) {
-        const caseIds = Array.from(
-          new Set(questions.map((q) => Number(q.case_id)))
-        );
-
-        // 케이스 정보 조회
-        const { data: cases, error: casesError } = await supabase
-          .from("detective_puzzle_cases")
-          .select("id, title")
-          .in("id", caseIds);
-
-        if (casesError) {
-          console.error("케이스 정보 조회 실패:", casesError);
-        } else if (cases) {
-          const caseTitleMap = new Map(
-            cases.map((c) => [Number(c.id), c.title])
-          );
-
-          // 질문 ID -> 케이스/질문 정보 매핑 생성
-          questions.forEach((q) => {
-            const questionId = Number(q.id);
-            const caseId = Number(q.case_id);
-            const caseTitle = caseTitleMap.get(caseId) || "";
-            questionInfoMap.set(questionId, {
-              caseId,
-              caseTitle,
-              questionNumber: q.question_number,
-            });
-          });
-        }
-      }
+      qs?.forEach(q => questionInfoMap.set(Number(q.id), { 
+        caseId: Number(q.case_id), 
+        questionNumber: q.question_number 
+      }));
     }
 
-    // 거래 내역 매핑
-    return (
-      data?.map((row) => {
-        const transaction: CoinTransaction = {
-          id: Number(row.id),
-          type: row.type as "charge" | "spend",
-          amount: Number(row.amount),
-          purpose: row.purpose as
-            | "answer_reveal"
-            | "case_unlock"
-            | "coin_purchase"
-            | null,
-          related_id: row.related_id ? Number(row.related_id) : null,
-          created_at: row.created_at,
-        };
+    // 3. 케이스 제목 한꺼번에 조회 (질문과 연결된 케이스 + 직접 해제한 케이스)
+    const allCaseIds = new Set<number>([...caseUnlockIds]);
+    questionInfoMap.forEach(val => allCaseIds.add(val.caseId));
+    
+    const caseTitleMap = new Map<number, string>();
+    if (allCaseIds.size > 0) {
+      const { data: cs } = await supabase
+        .from("detective_puzzle_cases")
+        .select("id, title")
+        .in("id", Array.from(allCaseIds));
+      cs?.forEach(c => caseTitleMap.set(Number(c.id), c.title));
+    }
 
-        // answer_reveal이고 related_id가 있으면 케이스/질문 정보 추가
-        if (
-          row.purpose === "answer_reveal" &&
-          row.related_id &&
-          questionInfoMap.has(Number(row.related_id))
-        ) {
-          const info = questionInfoMap.get(Number(row.related_id))!;
-          transaction.caseId = info.caseId;
-          transaction.caseTitle = info.caseTitle;
-          transaction.questionNumber = info.questionNumber;
-        }
+    // 4. 최종 데이터 매핑
+    return data.map((row) => {
+      const transaction: CoinTransaction = {
+        id: Number(row.id),
+        type: row.type as "charge" | "spend", // any 대신 정확한 유니온 타입 지정
+        amount: Number(row.amount),
+        purpose: row.purpose as "answer_reveal" | "case_unlock" | "coin_purchase" | null, // 정확한 타입 지정
+        related_id: row.related_id ? Number(row.related_id) : null,
+        created_at: row.created_at,
+      };
 
-        return transaction;
-      }) || []
-    );
-  } catch (err: unknown) {
-    console.error("코인 거래 내역 조회 중 예상치 못한 오류:", err);
+      const rId = Number(row.related_id);
+
+      if (row.purpose === "answer_reveal" && questionInfoMap.has(rId)) {
+        const qInfo = questionInfoMap.get(rId)!;
+        transaction.caseId = qInfo.caseId;
+        transaction.questionNumber = qInfo.questionNumber;
+        transaction.caseTitle = caseTitleMap.get(qInfo.caseId);
+      } else if (row.purpose === "case_unlock") {
+        transaction.caseId = rId;
+        transaction.caseTitle = caseTitleMap.get(rId);
+      }
+
+      return transaction;
+    });
+  } catch (err) {
+    console.error("내역 조회 오류:", err);
     return [];
   }
 }

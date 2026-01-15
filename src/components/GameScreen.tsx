@@ -10,7 +10,7 @@ import AlertModal from "./AlertModal";
 import { useGameState } from "@/hooks/useGameState";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCoins } from "@/hooks/useCoins";
-import { getPurchasedAnswers, getQuestionDbId, checkAnswerPurchased } from "@/utils/coins";
+import { getQuestionDbId, checkAnswerPurchased } from "@/utils/coins";
 import styles from "@/styles/components.module.css";
 
 interface GameScreenProps {
@@ -100,78 +100,35 @@ export default function GameScreen({
     const userId = getCurrentUserId();
     const requiredCoins = 3;
 
-    console.log("[handleShowAnswerClick] 시작:", { userId, caseId, currentQuestionId, balance });
-
     // A. 비로그인 또는 익명 사용자 → 안내 모달 표시 후 로그인 모달
     if (!userId || !user || isAnonymousUser) {
-      console.log("[handleShowAnswerClick] 비로그인 사용자");
       setAnswerAlertType("login");
       setShowAnswerAlertModal(true);
       return;
     }
 
-    // 이미 구매한 정답인지 확인
-    if (currentQuestionId) {
-      console.log("[handleShowAnswerClick] 구매 기록 확인 시작:", { caseId, currentQuestionId, type: typeof currentQuestionId });
-      
-      // 방법 1: getPurchasedAnswers로 확인
-      const purchasedAnswers = await getPurchasedAnswers(userId, caseId);
-      console.log("[handleShowAnswerClick] 구매 기록 확인 결과:", { 
-        purchasedAnswers, 
-        currentQuestionId, 
-        includes: purchasedAnswers.includes(currentQuestionId),
-        purchasedAnswersTypes: purchasedAnswers.map(a => typeof a),
-        currentQuestionIdType: typeof currentQuestionId
-      });
-      
-      // 타입 안전성을 위해 명시적으로 숫자로 변환하여 비교
-      const currentQuestionIdNum = Number(currentQuestionId);
-      const purchasedAnswersNums = purchasedAnswers.map(a => Number(a));
-      let isPurchased = purchasedAnswersNums.includes(currentQuestionIdNum);
-      
-      console.log("[handleShowAnswerClick] 타입 변환 후 비교:", {
-        currentQuestionId,
-        currentQuestionIdNum,
-        purchasedAnswers,
-        purchasedAnswersNums,
-        isPurchased
-      });
-      
-      // 방법 2: fallback - 질문 DB ID와 질문 번호로 직접 확인
-      if (!isPurchased) {
-        console.log("[handleShowAnswerClick] fallback 확인 시작");
-        const questionDbId = await getQuestionDbId(caseId, currentQuestionId);
-        console.log("[handleShowAnswerClick] 질문 DB ID:", questionDbId);
-        
-        if (questionDbId) {
-          // 질문 DB ID와 질문 번호 모두 전달하여 확인
-          isPurchased = await checkAnswerPurchased(userId, questionDbId, currentQuestionId);
-          console.log("[handleShowAnswerClick] fallback 확인 결과:", isPurchased);
-        }
-      }
+    // 1. [핵심 수정] 이 케이스의 이 질문만이 가진 '진짜 고유 ID'를 가져옵니다.
+    const questionDbId = await getQuestionDbId(caseId, currentQuestionId);
+    
+    if (questionDbId) {
+      // 2. 이제 1, 2, 3 같은 번호가 아니라, 고유한 ID로 구매 여부를 확인합니다.
+      const isPurchased = await checkAnswerPurchased(userId, questionDbId);
       
       if (isPurchased) {
-        console.log("[handleShowAnswerClick] 이미 구매한 정답 - 바로 표시");
-        // 이미 구매한 경우 코인 차감 없이 정답 표시
+        // 이미 샀다면 코인 차감 없이 정답을 바로 보여줍니다.
         handleShowAnswer();
         return;
-      } else {
-        console.log("[handleShowAnswerClick] 구매하지 않은 정답 - 구매 플로우 진행");
       }
-    } else {
-      console.log("[handleShowAnswerClick] currentQuestionId가 없음");
     }
 
-    // B. 로그인 + 코인 부족 → 안내 모달 표시 후 코인 충전 모달
+    // B. 코인 부족 시 안내 모달 표시
     if (balance < requiredCoins) {
-      console.log("[handleShowAnswerClick] 코인 부족:", { balance, requiredCoins });
       setAnswerAlertType("coin_insufficient");
       setShowAnswerAlertModal(true);
       return;
     }
 
-    // C. 로그인 + 코인 충분 → 안내 모달 표시 후 코인 차감 및 정답 노출
-    console.log("[handleShowAnswerClick] 코인 충분 - 구매 확인 모달 표시");
+    // C. 코인 충분 시 구매 확인 모달 표시
     setAnswerAlertType("coin_sufficient");
     setShowAnswerAlertModal(true);
   };

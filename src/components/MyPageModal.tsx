@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react"; // useCallback 추가
 import { useAuth } from "@/contexts/AuthContext";
 import { useCoins } from "@/hooks/useCoins";
 import { getCoinTransactions, CoinTransaction } from "@/utils/coins";
@@ -19,13 +19,8 @@ export default function MyPageModal({ isOpen, onClose }: MyPageModalProps) {
   const [loading, setLoading] = useState(false);
   const [showCoinModal, setShowCoinModal] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadTransactions();
-    }
-  }, [isOpen]);
-
-  const loadTransactions = async () => {
+  // loadTransactions를 useCallback으로 감싸서 빌드 에러를 근본적으로 해결합니다.
+  const loadTransactions = useCallback(async () => {
     const userId = getCurrentUserId();
     if (!userId || isAnonymousUser) {
       setTransactions([]);
@@ -42,7 +37,13 @@ export default function MyPageModal({ isOpen, onClose }: MyPageModalProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getCurrentUserId, isAnonymousUser]); // 의존성 추가
+
+  useEffect(() => {
+    if (isOpen) {
+      loadTransactions();
+    }
+  }, [isOpen, loadTransactions]); // 이제 loadTransactions를 여기에 넣어도 안전합니다.
 
   const handleCoinChargeClose = async () => {
     setShowCoinModal(false);
@@ -69,17 +70,20 @@ export default function MyPageModal({ isOpen, onClose }: MyPageModalProps) {
       case "coin_purchase":
         return "코인 충전";
       case "answer_reveal":
-        // 케이스/질문 정보가 있으면 함께 표시
         if (
           transaction &&
           transaction.caseId !== undefined &&
           transaction.questionNumber !== undefined
         ) {
-          return `정답 보기 (케이스 ${transaction.caseId}, 질문 ${transaction.questionNumber})`;
+          // 여기서 transaction.caseTitle을 활용하면 더 정확한 이름이 나옵니다.
+          const title = transaction.caseTitle || `케이스 ${transaction.caseId}`;
+          return `정답 보기 (${title}, 질문 ${transaction.questionNumber})`;
         }
         return "정답 보기";
       case "case_unlock":
-        return "케이스 잠금 해제";
+        return transaction?.caseTitle 
+          ? `케이스 잠금 해제 (${transaction.caseTitle})`
+          : "케이스 잠금 해제";
       default:
         return "기타";
     }
@@ -118,7 +122,6 @@ export default function MyPageModal({ isOpen, onClose }: MyPageModalProps) {
               </div>
             ) : (
               <>
-                {/* 잔액 표시 */}
                 <div className={styles.myPageBalance}>
                   <div className={styles.myPageBalanceLabel}>현재 잔액</div>
                   <div className={styles.myPageBalanceAmount}>
@@ -134,7 +137,6 @@ export default function MyPageModal({ isOpen, onClose }: MyPageModalProps) {
                   </button>
                 </div>
 
-                {/* 거래 내역 */}
                 <div className={styles.transactionSection}>
                   <h3 className={styles.transactionSectionTitle}>
                     충전 내역
