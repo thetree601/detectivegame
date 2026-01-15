@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PortOneClient } from "@portone/server-sdk";
 import { chargeCoins } from "@/utils/coins";
 import { getCoinProduct } from "@/utils/coinProducts";
-import { supabase } from "@/utils/supabase";
+import { supabaseAdmin as supabase} from "@/utils/supabase";
 
 /**
  * 포트원 클라이언트 초기화 (환경 변수 검증 포함)

@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabaseAdmin as supabase } from "./supabase";
 
 /**
  * 사용자의 코인 잔액 조회
