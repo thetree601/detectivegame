@@ -328,16 +328,18 @@ export async function getQuestionDbId(
  * @param questionNumber 질문 번호 (선택적)
  * @returns 구매 여부
  */
+
+/**
+ * 질문 DB ID로만 직접 구매 기록 확인 (중복 방지 핵심)
+ */
 export async function checkAnswerPurchased(
   userId: string,
-  questionDbId: number,
-  questionNumber?: number
+  questionDbId: number
 ): Promise<boolean> {
   try {
-    console.log("[checkAnswerPurchased] 시작:", { userId, questionDbId, questionNumber });
-    
-    // 방법 1: 질문 DB ID로 확인
-    const { data: dataById, error: errorById } = await supabase
+    // 💡 이제 매개변수에서 questionNumber를 아예 받지 않습니다.
+    // 오직 고유한 questionDbId로만 DB를 조회합니다.
+    const { data, error } = await supabase
       .from("coin_transactions")
       .select("id")
       .eq("user_id", userId)
@@ -345,39 +347,12 @@ export async function checkAnswerPurchased(
       .eq("related_id", questionDbId)
       .limit(1);
 
-    if (errorById) {
-      console.error("[checkAnswerPurchased] 질문 DB ID로 확인 실패:", errorById);
-    } else {
-      const isPurchasedById = dataById && dataById.length > 0;
-      console.log("[checkAnswerPurchased] 질문 DB ID로 확인 결과:", { questionDbId, isPurchasedById, count: dataById?.length || 0 });
-      if (isPurchasedById) {
-        return true;
-      }
+    if (error) {
+      console.error("[checkAnswerPurchased] 확인 실패:", error);
+      return false;
     }
 
-    // 방법 2: 질문 번호로도 확인 (제공된 경우)
-    if (questionNumber !== undefined) {
-      const { data: dataByNumber, error: errorByNumber } = await supabase
-        .from("coin_transactions")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("purpose", "answer_reveal")
-        .eq("related_id", questionNumber)
-        .limit(1);
-
-      if (errorByNumber) {
-        console.error("[checkAnswerPurchased] 질문 번호로 확인 실패:", errorByNumber);
-      } else {
-        const isPurchasedByNumber = dataByNumber && dataByNumber.length > 0;
-        console.log("[checkAnswerPurchased] 질문 번호로 확인 결과:", { questionNumber, isPurchasedByNumber, count: dataByNumber?.length || 0 });
-        if (isPurchasedByNumber) {
-          return true;
-        }
-      }
-    }
-
-    console.log("[checkAnswerPurchased] 최종 결과: false");
-    return false;
+    return data && data.length > 0;
   } catch (err: unknown) {
     console.error("[checkAnswerPurchased] 예상치 못한 오류:", err);
     return false;
